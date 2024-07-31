@@ -1,0 +1,23 @@
+# macOS 시스템 파일
+.DS_Store
+
+# Node.js
+node_modules/
+npm-debug.log
+
+# Python
+__pycache__/
+*.pyc
+
+# 빌드 출력
+dist/
+build/
+
+#vscode 세팅파일
+.vscode
+
+# 환경변수
+.env
+
+#yarn
+yarn-error.log
