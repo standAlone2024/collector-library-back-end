@@ -1,0 +1,31 @@
+import bcrypt from 'bcryptjs';
+import { printLog } from '../utils/Utils';
+
+interface User {
+  id: number;
+  email: string;  // 변경: username에서 email로 변경
+  password: string;
+}
+
+// const users: User[] = [];
+
+export const addUser = async (email: string, password: string) => {  // 변경: username에서 email로 변경
+  // const hashedPassword = await bcrypt.hash(password, 10);
+  // const user = { id: users.length + 1, email, password: hashedPassword };  // 변경: username에서 email로 변경
+  // users.push(user);
+  // return user;
+};
+
+export const findUser = async (email: string) => {
+  //DB 연결 해야 함
+  //Mock Data setting
+  const hashedPassword = await bcrypt.hash('1234', 10);
+  const user = { id: 1, email : 'aeca@naver.com', password: hashedPassword };
+  return user
+};
+
+export const validatePassword = async (password: string, hashedPassword: string) => {
+  let ret = await bcrypt.compare(password, hashedPassword);
+  printLog(ret);
+  return ret;
+};

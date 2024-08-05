@@ -1,12 +1,20 @@
 import express, { Request, Response } from 'express';
+import dotenv from 'dotenv';
 import userRoutes from './routes/user';
+import bodyParser from 'body-parser';
+import cors from 'cors';
 import logger from './middleware/logger';
+import authRoutes from './routes/authRoutes';
+
+// load .env file
+dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 3001;
+const port = parseInt(process.env.PORT || '3001');
 
+app.use(cors());
 // Middleware to parse JSON
-app.use(express.json());
+app.use(bodyParser.json());
 
 // Custom middleware
 app.use(logger);
@@ -18,6 +26,7 @@ app.get('/', (req: Request, res: Response) => {
 
 // User routes
 app.use('/users', userRoutes);
+app.use('/auth', authRoutes);
 
 // Start the server
 app.listen(port, () => {
