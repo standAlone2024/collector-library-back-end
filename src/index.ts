@@ -28,7 +28,7 @@ app.get('/', (req: Request, res: Response) => {
 app.use('/users', userRoutes);
 app.use('/auth', authRoutes);
 
-// Start the server
-app.listen(port, () => {
+// Start the server and connect to the database
+app.listen(port, async () => {
   console.log(`Server is running on port ${port}`);
 });

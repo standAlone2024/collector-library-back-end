@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { addUser, findUser, validatePassword } from '../models/userModel';
-import { printLog } from '../utils/Utils';
-import { SECRET_KEY } from '../utils/Constans';
+import { printLog } from '../utils/utils';
+import { SECRET_KEY } from '../utils/constants';
 
 export const register = async (req: Request, res: Response) => {
   const { email, password } = req.body;
@@ -20,9 +20,14 @@ export const register = async (req: Request, res: Response) => {
   res.status(201).json({ token });
 };
 
+export const test = async (req: Request, res: Response) => {
+  const message = 'hi flint';
+  res.status(200).json({ message });
+}
+
 export const login = async (req: Request, res: Response) => {
   const { email, password } = req.body;
-  printLog(email + '' + password + '');
+  printLog(email + ' ' + password );
   const user = await findUser(email);
   printLog(user);
 
@@ -31,7 +36,7 @@ export const login = async (req: Request, res: Response) => {
   }
 
   const token = jwt.sign({ userId: user.id }, SECRET_KEY, { expiresIn: '1h' });
-  // printLog(res.status);
+  printLog('signed');
   // printLog(res.json);
   res.status(200).json({ token });
 };

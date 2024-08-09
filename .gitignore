@@ -1,9 +1,15 @@
 # macOS 시스템 파일
 .DS_Store
+*.pem
 
 # Node.js
 node_modules/
 npm-debug.log
+
+# dependencies
+/.pnp
+.pnp.js
+.yarn/install-state.gz
 
 # Python
 __pycache__/
@@ -18,6 +24,15 @@ build/
 
 # 환경변수
 .env
+.env*.local
 
 #yarn
 yarn-error.log
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+#vscode 세팅파일
+.vscode

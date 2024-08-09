@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { SECRET_KEY } from '../utils/Constans';
+import { SECRET_KEY } from '../utils/constants';
 
 
 export const authenticateToken = (req: Request, res: Response, next: NextFunction) => {

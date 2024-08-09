@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import { printLog } from '../utils/Utils';
+import { printLog } from '../utils/utils';
 
 interface User {
   id: number;
@@ -19,13 +19,14 @@ export const addUser = async (email: string, password: string) => {  // 변경: 
 export const findUser = async (email: string) => {
   //DB 연결 해야 함
   //Mock Data setting
-  const hashedPassword = await bcrypt.hash('1234', 10);
+  // const hashedPassword = await bcrypt.hash('1234', 10);
+  const hashedPassword = '$2a$10$bwCqXmCiynjjclWuxzl.DOmU5.iaCgIPYCX9dTmkHvI6eUHcBMSea';
   const user = { id: 1, email : 'aeca@naver.com', password: hashedPassword };
   return user
 };
 
 export const validatePassword = async (password: string, hashedPassword: string) => {
   let ret = await bcrypt.compare(password, hashedPassword);
-  printLog(ret);
+  printLog('valid: ' + ret);
   return ret;
 };
