@@ -11,7 +11,7 @@ export class SectionService {
     this.queryBuilder = new QueryBuilder();
   }
 
-  async createSection(section: Omit<Section, 'id' | 'date'>): Promise<Section> {
+  async createSection(section: Omit<Section, 'id' | 'date'>): Promise<number> {
     const newSection = {
       ...section,
       date: toDate(moment().format('YYYY-MM-DD HH:mm:ss')),

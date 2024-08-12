@@ -1,43 +1,62 @@
 import { QueryBuilder } from '../../utils/queryBuilder';
-import {ROLE} from '../../utils/constants';
+import { printLog, toDate, toHashEncoding } from '../../utils/utils';
 import moment from 'moment';
-import {toDate} from '../../utils/utils';
+import { ROLE } from '../../utils/constants';
 
 export class UserService {
+  private static instance: UserService;
   private queryBuilder: QueryBuilder;
 
-  constructor() {
+  private constructor() {
     this.queryBuilder = new QueryBuilder();
   }
 
-  async createUser(user: Omit<User, 'id' | 'date'>): Promise<User> {
-    const newUser = {
-      ...user,
-      date: toDate(moment().format('YYYY-MM-DD HH:mm:ss')),
-    };
-    return this.queryBuilder.create<User>('User', newUser);
+  public static getInstance(): UserService {
+    if (!UserService.instance) {
+      UserService.instance = new UserService();
+    }
+    return UserService.instance;
   }
 
-  async getUser(id: number): Promise<User | null> {
+  public async createUser(user: Omit<User, 'id' | 'date'>): Promise<number> {
+    const hashedPassword = await toHashEncoding(user.password);
+    const newUser = {
+      ...user,
+      password: hashedPassword,
+      date: toDate(moment().format('YYYY-MM-DD HH:mm:ss')),
+    };
+    printLog(newUser);
+    const createdUserId = await this.queryBuilder.create<User>('User', newUser);
+    printLog('createdUserId ' + createdUserId);
+    // console.log(createdUser);
+    return createdUserId;
+  }
+
+  public async getUserById(id: number): Promise<User | null> {
     const users = await this.queryBuilder.read<User>('User', { id });
     return users[0] || null;
   }
 
-  async updateUser(id: number, user: Partial<User>): Promise<User> {
+  public async getUserByEmail(email: string): Promise<User | null> {
+    const users = await this.queryBuilder.read<User>('User', { email });
+    return users[0] || null;
+  }
+
+  public async updateUser(id: number, user: Partial<User>): Promise<User> {
     return this.queryBuilder.update<User>('User', user, { id });
   }
 
-  async deleteUser(id: number): Promise<void> {
+  public async deleteUser(id: number): Promise<void> {
     await this.queryBuilder.delete<User>('User', { id });
   }
 }
 
 export interface User {
-    id?: number;
-    role: ROLE; 
-    email: string;
-    password: string;
-    name?: string;
-    phone?: string;
-    date: Date;
+  id?: number;
+  role: ROLE;
+  email: string;
+  password: string;
+  name?: string;
+  phone?: string;
+  date: Date;
 }

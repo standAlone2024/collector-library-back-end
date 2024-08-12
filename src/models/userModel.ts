@@ -1,10 +1,15 @@
 import bcrypt from 'bcryptjs';
 import { printLog } from '../utils/utils';
+import { ROLE } from '../utils/constants';
 
-interface User {
-  id: number;
-  email: string;  // 변경: username에서 email로 변경
+export interface User {
+  id?: number;
+  role: ROLE;
+  email: string;
   password: string;
+  name?: string;
+  phone?: string;
+  date: Date;
 }
 
 // const users: User[] = [];

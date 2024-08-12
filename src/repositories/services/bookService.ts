@@ -10,7 +10,7 @@ export class BookService {
     this.queryBuilder = new QueryBuilder();
   }
 
-  async createBook(book: Omit<Book, 'id' | 'date'>): Promise<Book> {
+  async createBook(book: Omit<Book, 'id' | 'date'>): Promise<number> {
     const newBook = {
       ...book,
       date: toDate(moment().format('YYYY-MM-DD HH:mm:ss')),

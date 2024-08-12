@@ -1,25 +1,10 @@
 import moment from "moment";
 import { IS_SERVICE, LOG_LEVEL } from "./constants";
-export function printLog(log: any, log_level?: LOG_LEVEL){
-
+import bcrypt from 'bcryptjs';
+export function printLog(...args: any[]){
     if(IS_SERVICE)
         return;
-
-    switch(log_level)
-    {
-        case LOG_LEVEL.LOG : 
-            console.log(log) ;
-            break;
-        case LOG_LEVEL.WARNING : 
-            console.warn(log);
-            break;
-        case LOG_LEVEL.ERROR : 
-            console.error(log);
-            break;
-        default : 
-            console.log(log) ;
-            break;
-    }
+    console.log(...args);
 }
 
 export function toDate(date: moment.Moment | string): Date {
@@ -30,4 +15,10 @@ export function toDate(date: moment.Moment | string): Date {
       return moment(date).toDate();
     }
     throw new Error('Invalid date input');
+}
+
+export async function toHashEncoding(str: string): Promise<string> {
+    const SALT_ROUND = 10; 
+    const hashed = await bcrypt.hash(str, SALT_ROUND);
+    return hashed;
 }

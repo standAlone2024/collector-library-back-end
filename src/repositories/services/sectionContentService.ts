@@ -8,7 +8,7 @@ export class SectionContentService {
     this.queryBuilder = new QueryBuilder();
   }
 
-  async createSectionContent(content: Omit<SectionOptContent, 'id'>): Promise<SectionOptContent> {
+  async createSectionContent(content: Omit<SectionOptContent, 'id'>): Promise<number> {
     return this.queryBuilder.create<SectionOptContent>(TABLE_NAME, content);
   }
 

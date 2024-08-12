@@ -12,12 +12,17 @@ dotenv.config();
 const app = express();
 const port = parseInt(process.env.PORT || '3001');
 
-app.use(cors());
+app.use(cors({
+  methods: ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  origin: 'http://localhost:3000',
+  credentials: true,
+}));
+
 // Middleware to parse JSON
 app.use(bodyParser.json());
 
 // Custom middleware
-app.use(logger);
+// app.use(logger);
 
 // Basic route
 app.get('/', (req: Request, res: Response) => {

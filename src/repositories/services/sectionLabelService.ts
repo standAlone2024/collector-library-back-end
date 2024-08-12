@@ -9,7 +9,7 @@ export class SectionLabelService {
     this.queryBuilder = new QueryBuilder();
   }
 
-  async createSectionLabel(sectionLabel: Omit<SectionOptLabel, 'id'>): Promise<SectionOptLabel> {  
+  async createSectionLabel(sectionLabel: Omit<SectionOptLabel, 'id'>): Promise<number> {  
     return this.queryBuilder.create<SectionOptLabel>(TABLE_NAME, sectionLabel);
   }
 

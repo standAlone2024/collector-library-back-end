@@ -16,7 +16,7 @@ export class QueryBuilder {
     this.db = Database.getInstance();
   }
 
-  async create<T>(table: string, data: Partial<T>): Promise<T> {
+  async create<T>(table: string, data: Partial<T>): Promise<number> {
     const keys = Object.keys(data);
     const values = Object.values(data);
     const placeholders = keys.map(() => '?').join(', ');
@@ -25,7 +25,7 @@ export class QueryBuilder {
 
     try {
       const [result] = await this.db.query(query, values);
-      return result as T;
+      return (result as any).insertId;
     } catch (error) {
       console.error('Create error:', error);
       throw error;
