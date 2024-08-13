@@ -1,10 +1,9 @@
 import express, { Request, Response } from 'express';
 import dotenv from 'dotenv';
-import userRoutes from './routes/user';
 import bodyParser from 'body-parser';
 import cors from 'cors';
-import logger from './middleware/logger';
 import authRoutes from './routes/authRoutes';
+import sectionRoutes from './routes/sectionRoutes';
 
 // load .env file
 dotenv.config();
@@ -21,17 +20,14 @@ app.use(cors({
 // Middleware to parse JSON
 app.use(bodyParser.json());
 
-// Custom middleware
-// app.use(logger);
-
 // Basic route
 app.get('/', (req: Request, res: Response) => {
   res.send('Hello, TypeScript with Express!');
 });
 
-// User routes
-app.use('/users', userRoutes);
+// auth routes
 app.use('/auth', authRoutes);
+app.use('/section', sectionRoutes);
 
 // Start the server and connect to the database
 app.listen(port, async () => {

@@ -1,38 +1,51 @@
 import moment from 'moment';
-import { QueryBuilder } from '../../utils/queryBuilder';
+import { QueryBuilder } from '../../utils/QueryBuilder';
 import { toDate } from '../../utils/utils';
+import { create } from 'domain';
 
 const TABLE_NAME = 'Section';
 
 export class SectionService {
+  private static instance: SectionService;
   private queryBuilder: QueryBuilder;
 
-  constructor() {
+  private constructor() {
     this.queryBuilder = new QueryBuilder();
   }
 
-  async createSection(section: Omit<Section, 'id' | 'date'>): Promise<number> {
+  public static getInstance(): SectionService {
+    if(!SectionService.instance)
+      SectionService.instance = new SectionService();
+    return SectionService.instance;
+  }
+
+  public async createSection(section: Omit<Section, 'id' | 'date'>): Promise<Section | null> {
     const newSection = {
       ...section,
       date: toDate(moment().format('YYYY-MM-DD HH:mm:ss')),
     }
-    return this.queryBuilder.create<Section>(TABLE_NAME, section);
+    const createdSectionId = await this.queryBuilder.create<Section>(TABLE_NAME, newSection);
+    return await this.getSection(createdSectionId);
   }
 
-  async getSection(id: number): Promise<Section | null> {
+  public async getSection(id: number): Promise<Section | null> {
     const sections = await this.queryBuilder.read<Section>(TABLE_NAME, { id });
     return sections && sections.length > 0 ? sections[0] : null;
   }
 
-  async getSecitons(user_id: number): Promise<Section[] | null>{
+  public async getSecitons(user_id: number): Promise<Section[] | null>{
     return this.queryBuilder.read<Section>(TABLE_NAME, {user_id});
   }
 
-  async updateSection(id: number, section: Partial<Section>): Promise<Section> {
+  public async updateSection(id: number, section: Partial<Section>): Promise<Section> {
+    const newSection = {
+      ...section,
+      date: toDate(moment().format('YYYY-MM-DD HH:mm:ss')),
+    }
     return this.queryBuilder.update<Section>(TABLE_NAME, section, { id });
   }
 
-  async deleteSection(id: number): Promise<void> {
+  public async deleteSection(id: number): Promise<void> {
     await this.queryBuilder.delete<Section>(TABLE_NAME, { id });
   }
 }

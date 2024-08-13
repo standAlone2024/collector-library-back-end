@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import { addUser, findUser, validatePassword } from '../models/userModel';
+import bcrypt from 'bcryptjs';
 import { printLog } from '../utils/utils';
 import { ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET, IS_LOCALHOST, ROLE } from '../utils/constants';
 import { UserService } from '../repositories/services/UserService';
@@ -91,4 +91,10 @@ export const silent_refresh = async (req: Request, res: Response) => {
     // refreshToken이 유효하지 않은 경우
     res.status(403).json({ message: 'Invalid refresh token' });
   }
+};
+
+const validatePassword = async (password: string, hashedPassword: string) => {
+  let ret = await bcrypt.compare(password, hashedPassword);
+  printLog('valid: ' + ret);
+  return ret;
 };
