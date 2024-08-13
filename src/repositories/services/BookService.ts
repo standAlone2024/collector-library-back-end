@@ -1,4 +1,4 @@
-import { QueryBuilder } from '../../utils/queryBuilder';
+import { QueryBuilder } from '../../utils/_QueryBuilder';
 const TABLE_NAME = 'Book';
 import moment from 'moment';
 import {toDate} from '../../utils/utils';

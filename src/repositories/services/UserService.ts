@@ -1,7 +1,9 @@
-import { QueryBuilder } from '../../utils/queryBuilder';
+import { QueryBuilder } from '../../utils/_QueryBuilder';
 import { printLog, toDate, toHashEncoding } from '../../utils/utils';
 import moment from 'moment';
 import { ROLE } from '../../utils/constants';
+
+const TABLE_NAME = 'User';
 
 export class UserService {
   private static instance: UserService;
@@ -26,28 +28,28 @@ export class UserService {
       date: toDate(moment().format('YYYY-MM-DD HH:mm:ss')),
     };
     printLog(newUser);
-    const createdUserId = await this.queryBuilder.create<User>('User', newUser);
+    const createdUserId = await this.queryBuilder.create<User>(TABLE_NAME, newUser);
     printLog('createdUserId ' + createdUserId);
     // console.log(createdUser);
     return createdUserId;
   }
 
   public async getUserById(id: number): Promise<User | null> {
-    const users = await this.queryBuilder.read<User>('User', { id });
+    const users = await this.queryBuilder.read<User>(TABLE_NAME, { id });
     return users[0] || null;
   }
 
   public async getUserByEmail(email: string): Promise<User | null> {
-    const users = await this.queryBuilder.read<User>('User', { email });
+    const users = await this.queryBuilder.read<User>(TABLE_NAME, { email });
     return users[0] || null;
   }
 
   public async updateUser(id: number, user: Partial<User>): Promise<User> {
-    return this.queryBuilder.update<User>('User', user, { id });
+    return this.queryBuilder.update<User>(TABLE_NAME, user, { id });
   }
 
   public async deleteUser(id: number): Promise<void> {
-    await this.queryBuilder.delete<User>('User', { id });
+    await this.queryBuilder.delete<User>(TABLE_NAME, { id });
   }
 }
 
