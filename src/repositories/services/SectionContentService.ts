@@ -1,4 +1,4 @@
-import { QueryBuilder } from '../../utils/_QueryBuilder';
+import { QueryBuilder } from '../../utils/QueryBuilder';
 const TABLE_NAME = 'SectionOptContent';
 
 export class SectionContentService {

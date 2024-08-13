@@ -1,4 +1,4 @@
-import { QueryBuilder } from '../../utils/_QueryBuilder';
+import { QueryBuilder } from '../../utils/QueryBuilder';
 import { printLog, toDate, toHashEncoding } from '../../utils/utils';
 import moment from 'moment';
 import { ROLE } from '../../utils/constants';
