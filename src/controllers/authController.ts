@@ -2,8 +2,13 @@ import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { printLog } from '../utils/utils';
-import { ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET, IS_LOCALHOST, ROLE } from '../utils/constants';
-import { UserService } from '../repositories/services/UserService';
+import { ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET, IS_LOCALHOST, ROLE, AUTH_ERROR_CODE } from '../utils/constants';
+import { UserService, IUser } from '../repositories/services/UserService';
+
+interface IAuth {
+  token: string,
+  user: IUser
+}
 
 export const register = async (req: Request, res: Response) => {
   const { email, password } = req.body;
@@ -26,14 +31,28 @@ export const register = async (req: Request, res: Response) => {
     maxAge: 36 * 60 * 60 * 1000, // 36시간
   });
 
-  printLog(accessToken);
-
-  res.status(201).json({ token: accessToken });
+  // printLog(accessToken);
+  // const user = await UserService.getInstance().getUserById(createdUserId);
+  // const auth: IAuth = {
+  //   token: accessToken,
+  //   user: user
+  // };
+  // res.status(201).json({ auth });
+  res.status(201).json({ message: 'Join Seccess' });
 };
 
 export const test = async (req: Request, res: Response) => {
-  const message = 'hi flint';
-  res.status(200).json({ message });
+  res.status(200).json({ message: 'hi flint' });
+}
+
+export const logout = async (req: Request, res: Response) => {
+  res.clearCookie('refreshToken', {
+    httpOnly: true,
+    secure: IS_LOCALHOST ? false : process.env.NODE_ENV === 'production', // HTTPS에서만 쿠키 전송
+    sameSite: IS_LOCALHOST ? 'lax' : 'strict',
+    maxAge: 36 * 60 * 60 * 1000, // 36시간
+  });
+  res.status(200).json({ message: 'Logged out successfully' });
 }
 
 export const login = async (req: Request, res: Response) => {
@@ -56,15 +75,24 @@ export const login = async (req: Request, res: Response) => {
     sameSite: IS_LOCALHOST ? 'lax' : 'strict',
     maxAge: 36 * 60 * 60 * 1000, // 36시간
   });
-
-  res.status(200).json({ token: accessToken });
+  
+  // const user = await UserService.getInstance().getUserById(createdUserId);
+  const auth: IAuth = {
+    token: accessToken,
+    user: user
+  };
+  res.status(200).json({ message: 'login success', auth });
+  // res.status(200).json({ token: accessToken, user });
 };
 
 export const silent_refresh = async (req: Request, res: Response) => {
   const refreshToken = req.cookies.refreshToken;
-
+  // printLog('refreshToken: ' + refreshToken);
   if (!refreshToken) {
-    return res.status(401).json({ message: 'Refresh token not found' });
+    return res.status(401).json({ 
+      error: AUTH_ERROR_CODE.REFRESH_TOKEN_MISSING,
+      message: 'Refresh token is missing' 
+    });
   }
 
   try {
@@ -84,17 +112,29 @@ export const silent_refresh = async (req: Request, res: Response) => {
       maxAge: 36 * 60 * 60 * 1000, // 36시간
     });
 
+    const user = await UserService.getInstance().getUserById(parseInt(decoded.userId));
+
+    const auth: IAuth = {
+      token: newAccessToken,
+      user: user!
+    };
+
+    res.status(200).json({ message: 'Silent refresh seccess!', auth });
+
     // accessToken을 JSON payload로 전송
-    res.json({ accessToken: newAccessToken });
+    // res.json({ accessToken: newAccessToken, user });
 
   } catch (error) {
     // refreshToken이 유효하지 않은 경우
-    res.status(403).json({ message: 'Invalid refresh token' });
+    res.status(403).json({ 
+      error: AUTH_ERROR_CODE.REFRESH_TOKEN_INVALID,
+      message: 'Refresh token is invalid' 
+    });
   }
 };
 
 const validatePassword = async (password: string, hashedPassword: string) => {
-  let ret = await bcrypt.compare(password, hashedPassword);
-  printLog('valid: ' + ret);
+  const ret = await bcrypt.compare(password, hashedPassword);
+  // printLog('valid: ' + ret);
   return ret;
 };

@@ -19,38 +19,38 @@ export class SectionService {
     return SectionService.instance;
   }
 
-  public async createSection(section: Omit<Section, 'id' | 'date'>): Promise<Section | null> {
+  public async createSection(section: Omit<ISection, 'id' | 'date'>): Promise<ISection | null> {
     const newSection = {
       ...section,
       date: toDate(moment().format('YYYY-MM-DD HH:mm:ss')),
     }
-    const createdSectionId = await this.queryBuilder.create<Section>(TABLE_NAME, newSection);
+    const createdSectionId = await this.queryBuilder.create<ISection>(TABLE_NAME, newSection);
     return await this.getSection(createdSectionId);
   }
 
-  public async getSection(id: number): Promise<Section | null> {
-    const sections = await this.queryBuilder.read<Section>(TABLE_NAME, { id });
+  public async getSection(id: number): Promise<ISection | null> {
+    const sections = await this.queryBuilder.read<ISection>(TABLE_NAME, { id });
     return sections && sections.length > 0 ? sections[0] : null;
   }
 
-  public async getSecitons(user_id: number): Promise<Section[] | null>{
-    return this.queryBuilder.read<Section>(TABLE_NAME, {user_id});
+  public async getSecitons(user_id: number): Promise<ISection[] | null>{
+    return this.queryBuilder.read<ISection>(TABLE_NAME, {user_id});
   }
 
-  public async updateSection(id: number, section: Partial<Section>): Promise<Section> {
+  public async updateSection(id: number, section: Partial<ISection>): Promise<ISection> {
     const newSection = {
       ...section,
       date: toDate(moment().format('YYYY-MM-DD HH:mm:ss')),
     }
-    return this.queryBuilder.update<Section>(TABLE_NAME, section, { id });
+    return this.queryBuilder.update<ISection>(TABLE_NAME, section, { id });
   }
 
   public async deleteSection(id: number): Promise<void> {
-    await this.queryBuilder.delete<Section>(TABLE_NAME, { id });
+    await this.queryBuilder.delete<ISection>(TABLE_NAME, { id });
   }
 }
 
-export interface Section {
+export interface ISection {
     id?: number;
     user_id: number;
     order: number;

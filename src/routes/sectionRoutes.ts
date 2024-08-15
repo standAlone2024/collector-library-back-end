@@ -3,8 +3,8 @@ import {getSection, getSecitonById, createSection, updateSection, deleteLibrary}
 
 const router = express.Router();
 
-router.get('/', getSection);
-router.get('/:id', getSecitonById);
+router.get('/:id', getSection);
+// router.get('/:id', getSecitonById);
 router.post('/', createSection);
 router.put('/:id', updateSection);
 router.delete('/:id', deleteLibrary);

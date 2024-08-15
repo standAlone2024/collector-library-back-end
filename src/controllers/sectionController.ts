@@ -1,13 +1,13 @@
 import { Request, Response } from 'express';
-import { SectionService, Section } from '../repositories/services/SectionService';
-import { toDate } from '../utils/utils';
-import moment from 'moment';
+import { SectionService, ISection } from '../repositories/services/SectionService';
+import { printLog } from '../utils/utils';
 
 export const getSection = async (req: Request, res: Response) => {
     try {
-        const userId = Number.parseInt(req.params.userId);
+        printLog('userId: ' + req.params.id);
+        const userId = Number.parseInt(req.params.id);
         const sections = await SectionService.getInstance().getSecitons(userId);
-        res.status(200).json(sections);
+        res.status(200).json({ sections });
     } catch (error) {
         res.status(500).json({ message: "Error fetching sections", error });
     }
@@ -20,7 +20,7 @@ export const getSecitonById = async (req: Request, res: Response) => {
         if (!section) {
             return res.status(404).json({ message: "Section not found" });
         }
-        res.status(200).json(section);
+        res.status(200).json({ section });
     } catch (error) {
         res.status(500).json({ message: "Error fetching Section", error });
     }
