@@ -4,44 +4,97 @@ import moment from 'moment';
 import {toDate} from '../../utils/utils';
 
 export class BookService {
+  private static instance: BookService;
   private queryBuilder: QueryBuilder;
 
-  constructor() {
+  private constructor() {
     this.queryBuilder = new QueryBuilder();
   }
 
-  async createBook(book: Omit<Book, 'id' | 'date'>): Promise<number> {
+  public static getInstance() {
+    if(!BookService.instance)
+      BookService.instance = new BookService();
+    return BookService.instance;
+  }
+
+  public async createBook(book: Omit<IBook, 'id' | 'date'>): Promise<number> {
     const newBook = {
       ...book,
       date: toDate(moment().format('YYYY-MM-DD HH:mm:ss')),
     }
-    return this.queryBuilder.create<Book>(TABLE_NAME, book);
+    return this.queryBuilder.create<IBook>(TABLE_NAME, book);
   }
 
-  async getBook(id: number): Promise<Book | null> {
-    const books = await this.queryBuilder.read<Book>(TABLE_NAME, { id });
+  public async getBook(id: number): Promise<IBook | null> {
+    const books = await this.queryBuilder.read<IBook>(TABLE_NAME, { id });
     return books && books.length > 0 ? books[0] : null;
   }
 
-  async getBooks(section_id: number): Promise<Book[] | null> {
-    return this.queryBuilder.read<Book>(TABLE_NAME, { section_id });
+  public async getBookDetail(sectionId: number, page: number, pageSize: number): Promise<IBookDetailPaging | null> {
+    const offset = (page - 1) * pageSize;
+    const bookDetails = await this.queryBuilder.join<IBookDeatil>({
+      mainTable: 'Section',
+      columns: [
+        'S.id AS id',
+        'S.label AS label',
+        'B.title AS title',
+        'B.description AS description',
+        'B.book_thumb_path AS book_thumb_path',
+        'B.`order` AS `order`',
+        'JSON_ARRAYAGG(JSON_OBJECT(\'label_name\', SL.label_name, \'content\', SC.content)) AS etc'
+      ],
+      joins: [
+        { type: 'INNER', table: 'SectionOptLabel AS SL', on: 'SL.section_id = S.id' },
+        { type: 'INNER', table: 'Book AS B', on: 'B.section_id = S.id' },
+        { type: 'LEFT', table: 'SectionOptContent AS SC', on: 'SC.section_label_id = SL.id AND SC.book_id = B.id' }
+      ],
+      where: { 'S.id': sectionId },
+      groupBy: ['S.id', 'B.id'],
+      limit: 100
+    });
+    return (bookDetails && bookDetails.length > 0) ? {bookDetails, total: bookDetails.length} : {bookDetails: null, total: 0};
   }
 
-  async updateBook(id: number, book: Partial<Book>): Promise<Book> {
-    return this.queryBuilder.update<Book>(TABLE_NAME, book, { id });
+  public async getBooks(section_id: number): Promise<IBook[] | null> {
+    return this.queryBuilder.read<IBook>(TABLE_NAME, { section_id });
   }
 
-  async deleteBook(id: number): Promise<void> {
-    await this.queryBuilder.delete<Book>(TABLE_NAME, { id });
+  public async updateBook(id: number, book: Partial<IBook>): Promise<IBook> {
+    return this.queryBuilder.update<IBook>(TABLE_NAME, book, { id });
+  }
+
+  public async deleteBook(id: number): Promise<void> {
+    await this.queryBuilder.delete<IBook>(TABLE_NAME, { id });
   }
 }
 
-export interface Book {
-    id?: number;
-    section_id: number;
-    order: number;
-    title: string;
-    book_thumb_path?: string;
-    description?: string;
-    date: Date;
+export interface IBook {
+  id?: number;
+  section_id: number;
+  order: number;
+  title: string;
+  book_thumb_path?: string;
+  description?: string;
+  date: Date;
+}
+
+export interface IBookDeatil {
+  id: number;
+  order: number;
+  title: string;
+  book_thumb_path?: string;
+  description?: string;
+  date: Date;
+  etc: ILabel[];
+}
+
+export interface IBookDetailPaging {
+  bookDetails: IBookDeatil[] | null;
+  total: number;
+}
+
+export interface ILabel {
+  label_name: string;
+  content: string;
+  order: number
 }

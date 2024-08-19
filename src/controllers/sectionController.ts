@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { SectionService, ISection } from '../repositories/services/SectionService';
+import { SectionService } from '../repositories/services/SectionService';
 import { printLog } from '../utils/utils';
 
 export const getSection = async (req: Request, res: Response) => {
@@ -32,7 +32,7 @@ export const createSection = async (req: Request, res: Response) => {
         await SectionService.getInstance().createSection({user_id: userId, order, label, sec_thumb_path});
         res.status(201);
     } catch (error) {
-        res.status(400).json({ message: "Error creating library", error });
+        res.status(400).json({ message: "Error creating section", error });
     }
 };
 
@@ -41,17 +41,18 @@ export const updateSection = async (req: Request, res: Response) => {
         const id = Number.parseInt(req.params.id);
         const existSection = await SectionService.getInstance().getSection(id);
         if (!existSection) {
-            return res.status(404).json({ message: "Library not found" });
+            return res.status(404).json({ message: "Section not found" });
         }
         const {userId, order, label, sec_thumb_path} = req.body;
         await SectionService.getInstance().updateSection(id, {user_id: userId, order, label, sec_thumb_path});
         res.status(200);
     } catch (error) {
-        res.status(400).json({ message: "Error updating library", error });
+        res.status(400).json({ message: "Error updating section", error });
     }
 };
 
-export const deleteLibrary = async (req: Request, res: Response) => {
+export const deleteSection = async (req: Request, res: Response) => {
+    //DB CASECADE 설정으로 section이 삭제되면, book, sectionLabel, sectionContent가 다 같이 삭제
     try {
         const id = Number.parseInt(req.params.id);
         const existSection = await SectionService.getInstance().getSection(id);

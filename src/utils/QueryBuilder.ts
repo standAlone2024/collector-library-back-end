@@ -82,6 +82,7 @@ export class QueryBuilder {
     joins: JoinClause[];
     where?: Record<string, any>;
     orderBy?: string;
+    groupBy?: string[];
     limit?: number;
     offset?: number;
   }): Promise<T[]> {
@@ -91,32 +92,35 @@ export class QueryBuilder {
       joins,
       where = {},
       orderBy,
+      groupBy,
       limit,
       offset
     } = options;
-
-    const joinClauses = joins.map(join => 
+  
+    const joinClauses = joins.map(join =>
       `${join.type} JOIN ${join.table} ON ${join.on}`
     ).join(' ');
-
+  
     const whereClause = Object.keys(where).length
       ? `WHERE ${Object.keys(where).map(key => `${key} = ?`).join(' AND ')}`
       : '';
-
+  
     const orderByClause = orderBy ? `ORDER BY ${orderBy}` : '';
+    const groupByClause = groupBy?.length ? `GROUP BY ${groupBy.join(', ')}` : '';
     const limitClause = limit ? `LIMIT ${limit}` : '';
     const offsetClause = offset ? `OFFSET ${offset}` : '';
-
+  
     const query = `
       SELECT ${columns.join(', ')}
       FROM ${mainTable}
       ${joinClauses}
       ${whereClause}
+      ${groupByClause}
       ${orderByClause}
       ${limitClause}
       ${offsetClause}
     `.trim();
-
+  
     try {
       const [rows] = await this.db.query(query, Object.values(where));
       return rows as T[];

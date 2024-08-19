@@ -3,37 +3,44 @@ import { QueryBuilder } from '../../utils/QueryBuilder';
 const TABLE_NAME = 'SectionOptLabel';
 
 export class SectionLabelService {
+  private static instance: SectionLabelService;
   private queryBuilder: QueryBuilder;
 
-  constructor() {
+  private constructor() {
     this.queryBuilder = new QueryBuilder();
   }
 
-  async createSectionLabel(sectionLabel: Omit<SectionOptLabel, 'id'>): Promise<number> {  
-    return this.queryBuilder.create<SectionOptLabel>(TABLE_NAME, sectionLabel);
+  public static getInstance(): SectionLabelService {
+    if(!SectionLabelService.instance)
+      SectionLabelService.instance = new SectionLabelService();
+    return SectionLabelService.instance;
   }
 
-  async getSectionLabel(id: number): Promise<SectionOptLabel | null> {
-    const labels = await this.queryBuilder.read<SectionOptLabel>(TABLE_NAME, { id });
+  public async createSectionLabel(sectionLabel: Omit<ISectionOptLabel, 'id'>): Promise<number> {  
+    return this.queryBuilder.create<ISectionOptLabel>(TABLE_NAME, sectionLabel);
+  }
+
+  public async getSectionLabel(id: number): Promise<ISectionOptLabel | null> {
+    const labels = await this.queryBuilder.read<ISectionOptLabel>(TABLE_NAME, { id });
     return labels && labels.length > 0 ? labels[0] : null;
   }
 
-  async getSectionLabels(section_id: number): Promise<SectionOptLabel[] | null> {
-    return this.queryBuilder.read<SectionOptLabel>(TABLE_NAME , {section_id});
+  public async getSectionLabels(section_id: number): Promise<ISectionOptLabel[] | null> {
+    return this.queryBuilder.read<ISectionOptLabel>(TABLE_NAME , {section_id});
   }
 
-  async updateSectionLabel(id: number, sectionLabel: Partial<SectionOptLabel>): Promise<SectionOptLabel> {
-    return this.queryBuilder.update<SectionOptLabel>(TABLE_NAME, sectionLabel, { id });
+  public async updateSectionLabel(id: number, sectionLabel: Partial<ISectionOptLabel>): Promise<ISectionOptLabel> {
+    return this.queryBuilder.update<ISectionOptLabel>(TABLE_NAME, sectionLabel, { id });
   }
 
-  async deleteSectionLabel(id: number): Promise<void> {
-    await this.queryBuilder.delete<SectionOptLabel>(TABLE_NAME, { id });
+  public async deleteSectionLabel(id: number): Promise<void> {
+    await this.queryBuilder.delete<ISectionOptLabel>(TABLE_NAME, { id });
   }
 }
 
-export interface SectionOptLabel {
-    id?: number;
-    section_id: number;
-    level_name: string;
-    order: number;
-  }
+export interface ISectionOptLabel {
+  id?: number;
+  section_id: number;
+  label_name: string;
+  order: number;
+}
