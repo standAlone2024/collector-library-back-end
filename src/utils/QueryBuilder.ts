@@ -1,5 +1,6 @@
 // queryBuilder.ts
 import { Database } from '../repositories/database';
+import { printLog } from './utils';
 
 type JoinType = 'INNER' | 'LEFT' | 'RIGHT' | 'FULL';
 
@@ -16,13 +17,26 @@ export class QueryBuilder {
     this.db = Database.getInstance();
   }
 
+  private addBackticks(identifier: string): string {
+    // 이미 백틱이 있는 경우 그대로 반환
+    if (identifier.startsWith('`') && identifier.endsWith('`')) {
+      return identifier;
+    }
+    // 점이 있는 경우 (예: table.column) 각 부분에 개별적으로 백틱 추가
+    if (identifier.includes('.')) {
+      return identifier.split('.').map(part => `\`${part}\``).join('.');
+    }
+    // 그 외의 경우 전체에 백틱 추가
+    return `\`${identifier}\``;
+  }
+
   async create<T>(table: string, data: Partial<T>): Promise<number> {
-    const keys = Object.keys(data);
+    const keys = Object.keys(data).map(key => this.addBackticks(key));
     const values = Object.values(data);
     const placeholders = keys.map(() => '?').join(', ');
 
-    const query = `INSERT INTO ${table} (${keys.join(', ')}) VALUES (${placeholders})`;
-
+    const query = `INSERT INTO ${this.addBackticks(table)} (${keys.join(', ')}) VALUES (${placeholders})`;
+    printLog('query ' + query);
     try {
       const [result] = await this.db.query(query, values);
       return (result as any).insertId;
@@ -34,10 +48,11 @@ export class QueryBuilder {
 
   async read<T>(table: string, where: Partial<T> = {}): Promise<T[]> {
     const whereClause = Object.keys(where).length
-      ? `WHERE ${Object.keys(where).map(key => `${key} = ?`).join(' AND ')}`
-      : '';
+    ? `WHERE ${Object.keys(where).map(key => `${this.addBackticks(key)} = ?`).join(' AND ')}`
+    : '';
 
-    const query = `SELECT * FROM ${table} ${whereClause}`;
+    const query = `SELECT * FROM ${this.addBackticks(table)} ${whereClause}`;
+    printLog('query ' + query);
 
     try {
       const [rows] = await this.db.query(query, Object.values(where));
@@ -49,12 +64,13 @@ export class QueryBuilder {
   }
 
   async update<T>(table: string, data: Partial<T>, where: Partial<T>): Promise<T> {
-    const setClause = Object.keys(data).map(key => `${key} = ?`).join(', ');
-    const whereClause = Object.keys(where).map(key => `${key} = ?`).join(' AND ');
+    const setClause = Object.keys(data).map(key => `${this.addBackticks(key)} = ?`).join(', ');
+    const whereClause = Object.keys(where).map(key => `${this.addBackticks(key)} = ?`).join(' AND ');
 
-    const query = `UPDATE ${table} SET ${setClause} WHERE ${whereClause}`;
+    const query = `UPDATE ${this.addBackticks(table)} SET ${setClause} WHERE ${whereClause}`;
     const values = [...Object.values(data), ...Object.values(where)];
-
+    printLog('query ' + query);
+    printLog('values ' + values);
     try {
       const [result] = await this.db.query(query, values);
       return result as T;
@@ -65,8 +81,9 @@ export class QueryBuilder {
   }
 
   async delete<T>(table: string, where: Partial<T>): Promise<void> {
-    const whereClause = Object.keys(where).map(key => `${key} = ?`).join(' AND ');
-    const query = `DELETE FROM ${table} WHERE ${whereClause}`;
+    const whereClause = Object.keys(where).map(key => `${this.addBackticks(key)} = ?`).join(' AND ');
+    const query = `DELETE FROM ${this.addBackticks(table)} WHERE ${whereClause}`;
+    printLog('query ' + query);
 
     try {
       await this.db.query(query, Object.values(where));
@@ -97,22 +114,24 @@ export class QueryBuilder {
       offset
     } = options;
   
+    const backtickColumns = columns.map(col => this.addBackticks(col));
+
     const joinClauses = joins.map(join =>
-      `${join.type} JOIN ${join.table} ON ${join.on}`
+      `${join.type} JOIN ${this.addBackticks(join.table)} ON ${join.on}`
     ).join(' ');
+
+  const whereClause = Object.keys(where).length
+    ? `WHERE ${Object.keys(where).map(key => `${this.addBackticks(key)} = ?`).join(' AND ')}`
+    : '';
   
-    const whereClause = Object.keys(where).length
-      ? `WHERE ${Object.keys(where).map(key => `${key} = ?`).join(' AND ')}`
-      : '';
-  
-    const orderByClause = orderBy ? `ORDER BY ${orderBy}` : '';
-    const groupByClause = groupBy?.length ? `GROUP BY ${groupBy.join(', ')}` : '';
+    const orderByClause = orderBy ? `ORDER BY ${this.addBackticks(orderBy)}` : '';
+    const groupByClause = groupBy?.length ? `GROUP BY ${groupBy.map(col => this.addBackticks(col)).join(', ')}` : '';
     const limitClause = limit ? `LIMIT ${limit}` : '';
     const offsetClause = offset ? `OFFSET ${offset}` : '';
   
     const query = `
-      SELECT ${columns.join(', ')}
-      FROM ${mainTable}
+      SELECT ${backtickColumns.join(', ')}
+      FROM ${this.addBackticks(mainTable)}
       ${joinClauses}
       ${whereClause}
       ${groupByClause}
@@ -120,7 +139,7 @@ export class QueryBuilder {
       ${limitClause}
       ${offsetClause}
     `.trim();
-  
+    printLog('query ' + query);
     try {
       const [rows] = await this.db.query(query, Object.values(where));
       return rows as T[];
