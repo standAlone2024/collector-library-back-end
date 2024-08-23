@@ -7,6 +7,7 @@ import sectionRoutes from './routes/sectionRoutes';
 import sectionLabelRouters from './routes/sectionLabelRouters';
 import bookRouters from './routes/bookRouters';
 import sectionContentRouters from './routes/sectionContentRouters';
+import imageRouters from './routes/imageRouters';
 import cookieParser from 'cookie-parser';
 import verifyToken from './middleware/authMiddleware';
 
@@ -37,6 +38,7 @@ app.use('/section', verifyToken, sectionRoutes);
 app.use('/label', verifyToken, sectionLabelRouters);
 app.use('/book', verifyToken, bookRouters);
 app.use('/content', verifyToken, sectionContentRouters);
+app.use('/image', verifyToken, imageRouters);
 
 // Start the server and connect to the database
 app.listen(port, async () => {
