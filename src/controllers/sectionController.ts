@@ -28,9 +28,10 @@ export const getSecitonById = async (req: Request, res: Response) => {
 
 export const createSection = async (req: Request, res: Response) => {
     try {
-        const { userId, order, label, sec_thumb_path } = req.body;
-        await SectionService.getInstance().createSection({user_id: userId, order, label, sec_thumb_path});
-        res.status(201);
+        const { user_id, order, label, sec_thumb_path } = req.body;
+        // printLog(user_id, order, label, sec_thumb_path);
+        await SectionService.getInstance().createSection({user_id, order, label, sec_thumb_path});
+        res.status(201).json({message: "Create section success"});
     } catch (error) {
         res.status(400).json({ message: "Error creating section", error });
     }
