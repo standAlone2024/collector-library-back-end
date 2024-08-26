@@ -37,12 +37,13 @@ export class SectionService {
     return this.queryBuilder.read<ISection>(TABLE_NAME, {user_id});
   }
 
-  public async updateSection(id: number, section: Partial<ISection>): Promise<ISection> {
+  public async updateSection(id: number, section: Partial<ISection>): Promise<ISection | null> {
     const newSection = {
       ...section,
       date: toDate(moment().format('YYYY-MM-DD HH:mm:ss')),
     }
-    return this.queryBuilder.update<ISection>(TABLE_NAME, section, { id });
+    await this.queryBuilder.update<ISection>(TABLE_NAME, section, { id });
+    return await this.getSection(id);
   }
 
   public async deleteSection(id: number): Promise<void> {

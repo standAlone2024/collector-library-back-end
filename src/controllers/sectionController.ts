@@ -30,8 +30,8 @@ export const createSection = async (req: Request, res: Response) => {
     try {
         const { user_id, order, label, sec_thumb_path } = req.body;
         // printLog(user_id, order, label, sec_thumb_path);
-        await SectionService.getInstance().createSection({user_id, order, label, sec_thumb_path});
-        res.status(201).json({message: "Create section success"});
+        const newSection = await SectionService.getInstance().createSection({user_id, order, label, sec_thumb_path});
+        res.status(201).json({section: newSection});
     } catch (error) {
         res.status(400).json({ message: "Error creating section", error });
     }
@@ -44,9 +44,9 @@ export const updateSection = async (req: Request, res: Response) => {
         if (!existSection) {
             return res.status(404).json({ message: "Section not found" });
         }
-        const {userId, order, label, sec_thumb_path} = req.body;
-        await SectionService.getInstance().updateSection(id, {user_id: userId, order, label, sec_thumb_path});
-        res.status(200);
+        const {user_id, order, label, sec_thumb_path} = req.body;
+        const updatedSection = await SectionService.getInstance().updateSection(id, {user_id, order, label, sec_thumb_path});
+        res.status(200).json({section: updatedSection});
     } catch (error) {
         res.status(400).json({ message: "Error updating section", error });
     }
