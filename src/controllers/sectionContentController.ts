@@ -6,9 +6,9 @@ export const createContent = async (req: Request, res: Response) => {
     try {
         const { section_label_id, book_id, content } = req.body;
         await SectionContentService.getInstance().createSectionContent({section_label_id, book_id, content});
-        res.status(201);
+        return res.status(201);
     } catch (error) {
-        res.status(400).json({ message: "Error creating section content", error });
+        return res.status(400).json({ message: "Error creating section content", error });
     }
 };
 
@@ -21,9 +21,9 @@ export const updateContent = async (req: Request, res: Response) => {
         }
         const {id, section_label_id, book_id, content} = req.body;
         await SectionContentService.getInstance().updateSectionContent(id, {id, section_label_id, book_id, content});
-        res.status(200);
+        return res.status(200);
     } catch (error) {
-        res.status(400).json({ message: "Error updating section content", error });
+        return res.status(400).json({ message: "Error updating section content", error });
     }
 };
 

@@ -40,7 +40,7 @@ export const uploadImage = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error("Image upload error:", error);
-    res.status(500).json({ message: "Image upload failed" });
+    return res.status(500).json({ message: "Image upload failed" });
   }
 };
 

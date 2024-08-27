@@ -18,7 +18,7 @@ const verifyToken = (req: Request, res: Response, next: NextFunction) => {
     jwt.verify(accessToken, ACCESS_TOKEN_SECRET);
     next();
   } catch (err) {
-    res.status(403).json({ 
+    return res.status(403).json({ 
       error: AUTH_ERROR_CODE.ACCESS_TOKEN_INVALID,
       message: 'Access token is invalid' 
     });

@@ -1,7 +1,6 @@
 import moment from 'moment';
 import { QueryBuilder } from '../../utils/QueryBuilder';
 import { toDate } from '../../utils/utils';
-import { create } from 'domain';
 
 const TABLE_NAME = 'Section';
 
@@ -37,6 +36,16 @@ export class SectionService {
     return this.queryBuilder.read<ISection>(TABLE_NAME, {user_id});
   }
 
+  public async searchSections(label: string): Promise<ISectionResult[] | null> {
+    const sections = await this.queryBuilder.conditionRead<ISectionResult>({
+      mainTable: TABLE_NAME,
+      columns: ['id', 'label', 'sec_thumb_path'],
+      likeFields: ['label'],
+      where: {}
+    });
+    return sections;
+  }
+
   public async updateSection(id: number, section: Partial<ISection>): Promise<ISection | null> {
     const newSection = {
       ...section,
@@ -58,4 +67,10 @@ export interface ISection {
   label: string;
   sec_thumb_path?: string;
   date: Date;
+}
+
+export interface ISectionResult {
+  id: number;
+  label: string;
+  sec_thumb_path?: string;
 }

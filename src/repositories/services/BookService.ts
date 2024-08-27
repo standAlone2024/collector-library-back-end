@@ -30,9 +30,19 @@ export class BookService {
     return books && books.length > 0 ? books[0] : null;
   }
 
+  public async searchBooks(sectionId: number, label: string): Promise<IBookResult[] | null> {
+    const books = await this.queryBuilder.conditionRead<IBookResult>({
+      mainTable: TABLE_NAME,
+      columns: ['id', 'label', 'book_thumb_path'],
+      likeFields: ['label'],
+      where: {'section_id': sectionId}
+    });
+    return books;
+  }
+
   public async getBookDetail(sectionId: number, page: number, pageSize: number): Promise<IBookDetailPaging | null> {
     const offset = (page - 1) * pageSize;
-    const bookDetails = await this.queryBuilder.join<IBookDeatil>({
+    const bookDetails = await this.queryBuilder.conditionRead<IBookDeatil>({
       mainTable: 'Section',
       columns: [
         'S.id AS id',
@@ -97,4 +107,10 @@ export interface ILabel {
   label_name: string;
   content: string;
   order: number
+}
+
+export interface IBookResult {
+  id: number;
+  title: string;
+  book_thumb_path?: string;
 }

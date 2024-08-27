@@ -93,11 +93,68 @@ export class QueryBuilder {
     }
   }
   
-  async join<T>(options: {
+  // async conditionRead<T>(options: {
+  //   mainTable: string;
+  //   columns: string[];
+  //   joins: JoinClause[];
+  //   where?: Record<string, any>;
+  //   orderBy?: string;
+  //   groupBy?: string[];
+  //   limit?: number;
+  //   offset?: number;
+  // }): Promise<T[]> {
+  //   const {
+  //     mainTable,
+  //     columns,
+  //     joins,
+  //     where = {},
+  //     orderBy,
+  //     groupBy,
+  //     limit,
+  //     offset
+  //   } = options;
+  
+  //   const backtickColumns = columns.map(col => this.addBackticks(col));
+
+  //   const joinClauses = joins.map(join =>
+  //     `${join.type} JOIN ${this.addBackticks(join.table)} ON ${join.on}`
+  //   ).join(' ');
+
+  // const whereClause = Object.keys(where).length
+  //   ? `WHERE ${Object.keys(where).map(key => `${this.addBackticks(key)} = ?`).join(' AND ')}`
+  //   : '';
+  
+  //   const orderByClause = orderBy ? `ORDER BY ${this.addBackticks(orderBy)}` : '';
+  //   const groupByClause = groupBy?.length ? `GROUP BY ${groupBy.map(col => this.addBackticks(col)).join(', ')}` : '';
+  //   const limitClause = limit ? `LIMIT ${limit}` : '';
+  //   const offsetClause = offset ? `OFFSET ${offset}` : '';
+  
+  //   const query = `
+  //     SELECT ${backtickColumns.join(', ')}
+  //     FROM ${this.addBackticks(mainTable)}
+  //     ${joinClauses}
+  //     ${whereClause}
+  //     ${groupByClause}
+  //     ${orderByClause}
+  //     ${limitClause}
+  //     ${offsetClause}
+  //   `.trim();
+  //   printLog('query ' + query);
+  //   try {
+  //     const [rows] = await this.db.query(query, Object.values(where));
+  //     return rows as T[];
+  //   } catch (error) {
+  //     console.error('Join error:', error);
+  //     throw error;
+  //   }
+  // }
+
+  async conditionRead<T>(options: {
     mainTable: string;
     columns: string[];
-    joins: JoinClause[];
+    joins?: JoinClause[];
     where?: Record<string, any>;
+    likeFields?: string[];
     orderBy?: string;
     groupBy?: string[];
     limit?: number;
@@ -106,29 +163,35 @@ export class QueryBuilder {
     const {
       mainTable,
       columns,
-      joins,
+      joins = [],
       where = {},
+      likeFields = [],
       orderBy,
       groupBy,
       limit,
       offset
     } = options;
-  
+
     const backtickColumns = columns.map(col => this.addBackticks(col));
 
     const joinClauses = joins.map(join =>
       `${join.type} JOIN ${this.addBackticks(join.table)} ON ${join.on}`
     ).join(' ');
 
-  const whereClause = Object.keys(where).length
-    ? `WHERE ${Object.keys(where).map(key => `${this.addBackticks(key)} = ?`).join(' AND ')}`
-    : '';
-  
+    const whereClause = [
+      Object.keys(where).length
+        ? `WHERE ${Object.keys(where).map(key => `${this.addBackticks(key)} = ?`).join(' AND ')}`
+        : '',
+      likeFields.length
+        ? `AND ${likeFields.map(field => `${this.addBackticks(field)} LIKE ?`).join(' AND ')}`
+        : ''
+    ].filter(Boolean).join(' ');
+
     const orderByClause = orderBy ? `ORDER BY ${this.addBackticks(orderBy)}` : '';
     const groupByClause = groupBy?.length ? `GROUP BY ${groupBy.map(col => this.addBackticks(col)).join(', ')}` : '';
     const limitClause = limit ? `LIMIT ${limit}` : '';
     const offsetClause = offset ? `OFFSET ${offset}` : '';
-  
+
     const query = `
       SELECT ${backtickColumns.join(', ')}
       FROM ${this.addBackticks(mainTable)}
@@ -141,7 +204,8 @@ export class QueryBuilder {
     `.trim();
     printLog('query ' + query);
     try {
-      const [rows] = await this.db.query(query, Object.values(where));
+      const whereParams = [...Object.values(where), ...likeFields.map(field => `%${field}%`)];
+      const [rows] = await this.db.query(query, whereParams);
       return rows as T[];
     } catch (error) {
       console.error('Join error:', error);

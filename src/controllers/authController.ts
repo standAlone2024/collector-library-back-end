@@ -31,18 +31,11 @@ export const register = async (req: Request, res: Response) => {
     maxAge: 36 * 60 * 60 * 1000, // 36시간
   });
 
-  // printLog(accessToken);
-  // const user = await UserService.getInstance().getUserById(createdUserId);
-  // const auth: IAuth = {
-  //   token: accessToken,
-  //   user: user
-  // };
-  // res.status(201).json({ auth });
-  res.status(201).json({ message: 'Join Seccess' });
+  return res.status(201).json({ message: 'Join Seccess' });
 };
 
 export const test = async (req: Request, res: Response) => {
-  res.status(200).json({ message: 'hi flint' });
+  return res.status(200).json({ message: 'hi flint' });
 }
 
 export const logout = async (req: Request, res: Response) => {
@@ -52,7 +45,7 @@ export const logout = async (req: Request, res: Response) => {
     sameSite: IS_LOCALHOST ? 'lax' : 'strict',
     maxAge: 36 * 60 * 60 * 1000, // 36시간
   });
-  res.status(200).json({ message: 'Logged out successfully' });
+  return res.status(200).json({ message: 'Logged out successfully' });
 }
 
 export const login = async (req: Request, res: Response) => {
@@ -81,8 +74,8 @@ export const login = async (req: Request, res: Response) => {
     token: accessToken,
     user: user
   };
-  res.status(200).json({ message: 'login success', auth });
-  // res.status(200).json({ token: accessToken, user });
+  return res.status(200).json({ message: 'login success', auth });
+  // return res.status(200).json({ token: accessToken, user });
 };
 
 export const silent_refresh = async (req: Request, res: Response) => {
@@ -119,14 +112,14 @@ export const silent_refresh = async (req: Request, res: Response) => {
       user: user!
     };
 
-    res.status(200).json({ message: 'Silent refresh seccess!', auth });
+    return res.status(200).json({ message: 'Silent refresh seccess!', auth });
 
     // accessToken을 JSON payload로 전송
     // res.json({ accessToken: newAccessToken, user });
 
   } catch (error) {
     // refreshToken이 유효하지 않은 경우
-    res.status(403).json({ 
+    return res.status(403).json({ 
       error: AUTH_ERROR_CODE.REFRESH_TOKEN_INVALID,
       message: 'Refresh token is invalid' 
     });
