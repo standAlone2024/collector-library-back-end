@@ -159,6 +159,7 @@ export class QueryBuilder {
     groupBy?: string[];
     limit?: number;
     offset?: number;
+    keyword?: string;  // keyword 옵션 추가
   }): Promise<T[]> {
     const {
       mainTable,
@@ -169,7 +170,8 @@ export class QueryBuilder {
       orderBy,
       groupBy,
       limit,
-      offset
+      offset,
+      keyword
     } = options;
 
     const backtickColumns = columns.map(col => this.addBackticks(col));
@@ -178,14 +180,14 @@ export class QueryBuilder {
       `${join.type} JOIN ${this.addBackticks(join.table)} ON ${join.on}`
     ).join(' ');
 
-    const whereClause = [
-      Object.keys(where).length
-        ? `WHERE ${Object.keys(where).map(key => `${this.addBackticks(key)} = ?`).join(' AND ')}`
-        : '',
-      likeFields.length
-        ? `AND ${likeFields.map(field => `${this.addBackticks(field)} LIKE ?`).join(' AND ')}`
-        : ''
-    ].filter(Boolean).join(' ');
+    const whereClauses = [];
+    if (Object.keys(where).length) {
+      whereClauses.push(Object.keys(where).map(key => `${this.addBackticks(key)} = ?`).join(' AND '));
+    }
+    if (likeFields.length) {
+      whereClauses.push(likeFields.map(field => `${this.addBackticks(field)} LIKE ?`).join(' AND '));
+    }
+    const whereClause = whereClauses.length ? `WHERE ${whereClauses.join(' AND ')}` : '';
 
     const orderByClause = orderBy ? `ORDER BY ${this.addBackticks(orderBy)}` : '';
     const groupByClause = groupBy?.length ? `GROUP BY ${groupBy.map(col => this.addBackticks(col)).join(', ')}` : '';
@@ -204,7 +206,8 @@ export class QueryBuilder {
     `.trim();
     printLog('query ' + query);
     try {
-      const whereParams = [...Object.values(where), ...likeFields.map(field => `%${field}%`)];
+      // const whereParams = [...Object.values(where), ...likeFields.map(() => `%${options.keyword}%`)];
+      const whereParams = [...Object.values(where), ...likeFields.map(() => `%${keyword}%`)];
       const [rows] = await this.db.query(query, whereParams);
       return rows as T[];
     } catch (error) {

@@ -1,7 +1,7 @@
 import { QueryBuilder } from '../../utils/QueryBuilder';
 const TABLE_NAME = 'Book';
 import moment from 'moment';
-import {toDate} from '../../utils/utils';
+import {printLog, toDate} from '../../utils/utils';
 
 export class BookService {
   private static instance: BookService;
@@ -30,13 +30,15 @@ export class BookService {
     return books && books.length > 0 ? books[0] : null;
   }
 
-  public async searchBooks(sectionId: number, label: string): Promise<IBookResult[] | null> {
+  public async searchBooks(sectionId: number, keyword: string): Promise<IBookResult[] | null> {
     const books = await this.queryBuilder.conditionRead<IBookResult>({
       mainTable: TABLE_NAME,
-      columns: ['id', 'label', 'book_thumb_path'],
-      likeFields: ['label'],
-      where: {'section_id': sectionId}
+      columns: ['id', 'title', 'book_thumb_path'],
+      likeFields: ['title'],
+      where: {'section_id': sectionId},
+      keyword: keyword,
     });
+    printLog(books ? books.length : 'no search result');
     return books;
   }
 

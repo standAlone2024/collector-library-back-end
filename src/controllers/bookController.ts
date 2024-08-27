@@ -44,10 +44,11 @@ export const searchBooks = async (req: Request, res: Response) => {
     try {
         const { keyword, section_id } = req.query as { keyword: string, section_id: string };
         const sectionId = Number.parseInt(section_id);
+        // printLog(keyword, sectionId);
         if(!keyword || typeof keyword !== 'string') 
             return res.status(400).json({message: "Keyword is not found"});
-        printLog(keyword);
         const books = await BookService.getInstance().searchBooks(sectionId, keyword);
+        // printLog('books: ' + books?.length);
         return res.status(200).json({books});
     }catch(err) {
         return res.status(500).json({message: "Error searching books", err});
