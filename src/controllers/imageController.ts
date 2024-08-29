@@ -1,11 +1,14 @@
 import { Request, Response } from 'express';
-import sharp from 'sharp';
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { v4 as uuidv4 } from 'uuid';
+import { transliterate } from 'transliteration';
+import sharp from 'sharp';
+import { recognizeText } from '../utils/tesseractWorker';
 import { printLog } from '../utils/utils';
 
 const DIRECTORY_ORIGIN = 'origin';
 const DIRECTORY_THUMB = 'thumbnail';
+const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif'];
 
 const s3Client = new S3Client({
   region: process.env.AWS_REGION,
@@ -16,31 +19,54 @@ const s3Client = new S3Client({
 });
 
 export const uploadImage = async (req: Request, res: Response) => {
+  printLog('upload');
   try {
     if (!req.file) {
       return res.status(400).json({ message: "No file uploaded" });
     }
+
     const userId = req.body.userId;
     const file = req.file;
-    const uuid = uuidv4();
-    const fileName = `${uuid}-${file.originalname}`;
+    const extension = file.originalname.split('.').pop()?.toLowerCase();
 
-    // 원본 이미지 업로드
-    const originalPath = await uploadToS3(file.buffer, userId, DIRECTORY_ORIGIN, fileName, file.mimetype);
-    // 썸네일 생성
-    const thumbnailBuffer = await sharp(file.buffer)
-      .resize(114, 164, { fit: 'cover' })
-      .toBuffer();
-    // 썸네일 업로드
+    if (!extension || !ALLOWED_EXTENSIONS.includes(extension)) {
+      return res.status(400).json({ message: "Invalid file type. Allowed types are: " + ALLOWED_EXTENSIONS.join(', ') });
+    }
+
+    const uuid = uuidv4();
+    const nameWithoutExtension = file.originalname.split('.').slice(0, -1).join('.');
+    
+    const transliteratedName = transliterate(nameWithoutExtension)
+      .replace(/[^a-zA-Z0-9]/g, '_')
+      .substring(0, 50);
+
+    const fileName = `${uuid}-${transliteratedName}.${extension}`;
+
+    // 병렬 처리를 위한 Promise.all 사용
+    const [originalPath, thumbnailBuffer, extractedText] = await Promise.all([
+      //TODO path를 받아서 section과 book의 디렉토리를 구별해야 좋을 듯
+      //S3의 주소 https://collector-library.s3.ap-northeast-2.amazonaws.com/는 생략하고 보내도 될 듯
+      uploadToS3(file.buffer, userId, DIRECTORY_ORIGIN, fileName, file.mimetype),
+      sharp(file.buffer).resize(114, 164, { fit: 'cover' }).toBuffer(),
+      recognizeText(file.buffer)
+    ]);
+
     const thumbnailPath = await uploadToS3(thumbnailBuffer, userId, DIRECTORY_THUMB, fileName, 'image/jpeg');
 
-    res.json({
-      originalPath,
-      thumbnailPath
-    });
+    const imageResult: IImageResult = {
+      original_path: originalPath,
+      thumbnail_path: thumbnailPath,
+      original_fileName: file.originalname,
+      extracted_text: '',
+    };
+
+    // printLog(imageResult);
+
+    res.status(201).json({ imageResult });
   } catch (error) {
     console.error("Image upload error:", error);
-    return res.status(500).json({ message: "Image upload failed" });
+    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+    return res.status(500).json({ message: "Image upload failed", error: errorMessage });
   }
 };
 
@@ -64,6 +90,13 @@ const uploadToS3 = async (
     return `https://${params.Bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${params.Key}`;
   } catch (error) {
     console.error('Error uploading to S3:', error);
-    throw error;
+    throw new Error(`S3 upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 };
+
+interface IImageResult {
+  original_path: string,
+  thumbnail_path: string,
+  original_fileName: string,
+  extracted_text?: string
+}

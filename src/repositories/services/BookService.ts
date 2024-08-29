@@ -17,12 +17,13 @@ export class BookService {
     return BookService.instance;
   }
 
-  public async createBook(book: Omit<IBook, 'id' | 'date'>): Promise<number> {
+  public async createBook(book: Omit<IBook, 'id' | 'date'>): Promise<IBook | null> {
     const newBook = {
       ...book,
       date: toDate(moment().format('YYYY-MM-DD HH:mm:ss')),
     }
-    return this.queryBuilder.create<IBook>(TABLE_NAME, book);
+    const createdBookId = await this.queryBuilder.create<IBook>(TABLE_NAME, book);
+    return await this.getBook(createdBookId);
   }
 
   public async getBook(id: number): Promise<IBook | null> {

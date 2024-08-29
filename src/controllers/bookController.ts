@@ -58,8 +58,8 @@ export const searchBooks = async (req: Request, res: Response) => {
 export const createBook = async (req: Request, res: Response) => {
     try {
         const {section_id, order, title, book_thumb_path, description} = req.body;
-        await BookService.getInstance().createBook({section_id, order, title, book_thumb_path, description});
-        return res.status(201);
+        const newBook = await BookService.getInstance().createBook({section_id, order, title, book_thumb_path, description});
+        return res.status(201).json({book: newBook});
     } catch(error){
         return res.status(400).json({ message: "Error create book", error });
     }

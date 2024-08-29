@@ -10,6 +10,8 @@ import sectionContentRouters from './routes/sectionContentRouters';
 import imageRouters from './routes/imageRouters';
 import cookieParser from 'cookie-parser';
 import verifyToken from './middleware/authMiddleware';
+import { initializeWorker, terminateWorker } from './utils/tesseractWorker';
+import { Server } from 'http'; // 추가된 import
 
 
 // load .env file
@@ -40,7 +42,33 @@ app.use('/book', verifyToken, bookRouters);
 app.use('/content', verifyToken, sectionContentRouters);
 app.use('/image', verifyToken, imageRouters);
 
-// Start the server and connect to the database
-app.listen(port, async () => {
-  console.log(`Server is running on port ${port}`);
+let server: Server;
+
+async function startServer() {
+  try {
+    await initializeWorker();
+    console.log('Tesseract worker initialized successfully');
+
+    server = app.listen(port, () => {
+      console.log(`Server is running on port ${port}`);
+    });
+  } catch (error) {
+    console.error('Failed to initialize Tesseract worker:', error);
+    process.exit(1);
+  }
+}
+
+process.on('SIGINT', async () => {
+  console.log('Shutting down server...');
+  
+  //Express 서버 종료
+  server.close(() => {
+    console.log('Express server closed');
+  });
+
+  await terminateWorker();
+  console.log('Tesseract worker terminated');
+  process.exit(0);
 });
+
+startServer();
