@@ -17,10 +17,11 @@ export class BookService {
     return BookService.instance;
   }
 
-  public async createBook(book: Omit<IBook, 'id' | 'date'>): Promise<IBook | null> {
+  public async createBook(book: Omit<IBook, 'id' | 'created_date'>): Promise<IBook | null> {
     const newBook = {
       ...book,
-      date: toDate(moment().format('YYYY-MM-DD HH:mm:ss')),
+      created_date: toDate(moment().format('YYYY-MM-DD HH:mm:ss')),
+      updated_date: toDate(moment().format('YYYY-MM-DD HH:mm:ss')),
     }
     const createdBookId = await this.queryBuilder.create<IBook>(TABLE_NAME, book);
     return await this.getBook(createdBookId);
@@ -75,7 +76,7 @@ export class BookService {
   public async updateBook(id: number, book: Partial<IBook>): Promise<IBook | null> {
     const newBook = {
       ...book,
-      date: toDate(moment().format('YYYY-MM-DD HH:mm:ss')),
+      updated_date: toDate(moment().format('YYYY-MM-DD HH:mm:ss')),
     }
     await this.queryBuilder.update<IBook>(TABLE_NAME, book, { id });
     return await this.getBook(id);
@@ -93,7 +94,8 @@ export interface IBook {
   title: string;
   book_thumb_path?: string;
   description?: string;
-  date: Date;
+  created_date: Date;
+  updated_date?: Date;
 }
 
 export interface IBookDeatil {
@@ -102,7 +104,8 @@ export interface IBookDeatil {
   title: string;
   book_thumb_path?: string;
   description?: string;
-  date: Date;
+  created_date: Date;
+  updated_date?: Date;
   etc: ILabel[];
 }
 

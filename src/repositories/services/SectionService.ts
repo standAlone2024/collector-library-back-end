@@ -18,10 +18,11 @@ export class SectionService {
     return SectionService.instance;
   }
 
-  public async createSection(section: Omit<ISection, 'id' | 'date'>): Promise<ISection | null> {
+  public async createSection(section: Omit<ISection, 'id' | 'created_date'>): Promise<ISection | null> {
     const newSection = {
       ...section,
-      date: toDate(moment().format('YYYY-MM-DD HH:mm:ss')),
+      created_date: toDate(moment().format('YYYY-MM-DD HH:mm:ss')),
+      updated_date: toDate(moment().format('YYYY-MM-DD HH:mm:ss')),
     }
     const createdSectionId = await this.queryBuilder.create<ISection>(TABLE_NAME, newSection);
     return await this.getSection(createdSectionId);
@@ -49,7 +50,7 @@ export class SectionService {
   public async updateSection(id: number, section: Partial<ISection>): Promise<ISection | null> {
     const newSection = {
       ...section,
-      date: toDate(moment().format('YYYY-MM-DD HH:mm:ss')),
+      updated_date: toDate(moment().format('YYYY-MM-DD HH:mm:ss')),
     }
     await this.queryBuilder.update<ISection>(TABLE_NAME, section, { id });
     return await this.getSection(id);
@@ -66,7 +67,8 @@ export interface ISection {
   order: number;
   label: string;
   sec_thumb_path?: string;
-  date: Date;
+  created_date: Date;
+  updated_date?: Date;
 }
 
 export interface ISectionResult {
