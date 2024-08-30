@@ -72,8 +72,8 @@ export const updateBook = async (req: Request, res: Response) => {
         if(!existBook)
             return res.status(404).json({message: "Book not found"});
         const {id, section_id, order, title, book_thumb_path, description, date} = req.body;
-        await BookService.getInstance().updateBook(bookId, {id, section_id, order, title, book_thumb_path, description, date});
-        return res.status(200).json({message: "Update book success"});
+        const updatedBook = await BookService.getInstance().updateBook(bookId, {id, section_id, order, title, book_thumb_path, description, date});
+        return res.status(200).json({book: updatedBook});
     } catch(error){
         return res.status(400).json({ message: "Error update book", error });
     }

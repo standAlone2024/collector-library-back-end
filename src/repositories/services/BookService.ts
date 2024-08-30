@@ -72,8 +72,13 @@ export class BookService {
     return this.queryBuilder.read<IBook>(TABLE_NAME, { section_id });
   }
 
-  public async updateBook(id: number, book: Partial<IBook>): Promise<IBook> {
-    return this.queryBuilder.update<IBook>(TABLE_NAME, book, { id });
+  public async updateBook(id: number, book: Partial<IBook>): Promise<IBook | null> {
+    const newBook = {
+      ...book,
+      date: toDate(moment().format('YYYY-MM-DD HH:mm:ss')),
+    }
+    await this.queryBuilder.update<IBook>(TABLE_NAME, book, { id });
+    return await this.getBook(id);
   }
 
   public async deleteBook(id: number): Promise<void> {
