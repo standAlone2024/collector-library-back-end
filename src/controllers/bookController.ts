@@ -7,7 +7,7 @@ export const getBooks = async (req: Request, res: Response) => {
         const sectionId = Number.parseInt(req.params.id as string) || 0;
         printLog("sectionId " + sectionId);
         if(sectionId === 0)
-            return res.status(400).json({message: "Section id id not sent"});
+            return res.status(400).json({message: "Section id is not sent"});
         const books = await BookService.getInstance().getBooks(sectionId);
         return res.status(200).json({books});
     } catch(error){
@@ -70,7 +70,7 @@ export const updateBook = async (req: Request, res: Response) => {
         const bookId = Number.parseInt(req.params.id);
         const existBook = await BookService.getInstance().getBook(bookId);
         if(!existBook)
-            return res.status(404).json({message: "Book not found"});
+            return res.status(404).json({message: "Book is not found"});
         const {id, section_id, order, title, book_thumb_path, description, date} = req.body;
         const updatedBook = await BookService.getInstance().updateBook(bookId, {id, section_id, order, title, book_thumb_path, description});
         return res.status(200).json({book: updatedBook});
@@ -84,7 +84,7 @@ export const deleteBook = async (req: Request, res: Response) => {
         const bookId = Number.parseInt(req.params.id);
         const existBook = await BookService.getInstance().getBook(bookId);
         if(!existBook)
-            return res.status(404).json({message: "Book not found"});
+            return res.status(404).json({message: "Book is not found"});
         await BookService.getInstance().deleteBook(bookId);
         return res.status(200).json({message: "Book successfully deleted"});
     } catch(error){
