@@ -23,7 +23,7 @@ export class BookService {
       created_date: toDate(moment().format('YYYY-MM-DD HH:mm:ss')),
       updated_date: toDate(moment().format('YYYY-MM-DD HH:mm:ss')),
     }
-    const createdBookId = await this.queryBuilder.create<IBook>(TABLE_NAME, book);
+    const createdBookId = await this.queryBuilder.create<IBook>(TABLE_NAME, newBook);
     return await this.getBook(createdBookId);
   }
 
