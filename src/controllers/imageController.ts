@@ -26,6 +26,7 @@ export const uploadImage = async (req: Request, res: Response) => {
     }
 
     const userId = req.body.userId;
+    const path = req.body.path;
     const file = req.file;
     const extension = file.originalname.split('.').pop()?.toLowerCase();
 
@@ -46,12 +47,12 @@ export const uploadImage = async (req: Request, res: Response) => {
     const [originalPath, thumbnailBuffer, extractedText] = await Promise.all([
       //TODO path를 받아서 section과 book의 디렉토리를 구별해야 좋을 듯
       //S3의 주소 https://collector-library.s3.ap-northeast-2.amazonaws.com/는 생략하고 보내도 될 듯
-      uploadToS3(file.buffer, userId, DIRECTORY_ORIGIN, fileName, file.mimetype),
+      uploadToS3(file.buffer, userId, path, DIRECTORY_ORIGIN, fileName, file.mimetype),
       sharp(file.buffer).resize(114, 164, { fit: 'cover' }).toBuffer(),
       recognizeText(file.buffer)
     ]);
 
-    const thumbnailPath = await uploadToS3(thumbnailBuffer, userId, DIRECTORY_THUMB, fileName, 'image/jpeg');
+    const thumbnailPath = await uploadToS3(thumbnailBuffer, userId, path, DIRECTORY_THUMB, fileName, 'image/jpeg');
 
     const imageResult: IImageResult = {
       original_path: originalPath,
@@ -73,13 +74,14 @@ export const uploadImage = async (req: Request, res: Response) => {
 const uploadToS3 = async (
   body: Buffer,
   userId: number,
+  rootPath: string,
   directoryPath: string,
   fileName: string,
   contentType: string
 ): Promise<string> => {
   const params = {
     Bucket: process.env.S3_BUCKET_NAME as string,
-    Key: `sections/${userId}/${directoryPath}/${fileName}`,
+    Key: `${rootPath}/${userId}/${directoryPath}/${fileName}`,
     Body: body,
     ContentType: contentType
   };
@@ -87,7 +89,8 @@ const uploadToS3 = async (
   try {
     const command = new PutObjectCommand(params);
     await s3Client.send(command);
-    return `https://${params.Bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${params.Key}`;
+    // return `https://${params.Bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${params.Key}`;
+    return `/${params.Key}`;
   } catch (error) {
     console.error('Error uploading to S3:', error);
     throw new Error(`S3 upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
