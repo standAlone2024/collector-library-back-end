@@ -32,6 +32,31 @@ export class BookService {
     return books && books.length > 0 ? books[0] : null;
   }
 
+  public async getBookWithKeyword(id: number): Promise<IBookWithOCR | null> {
+    const bookWithOCR = await this.queryBuilder.conditionRead<IBookWithOCR>({
+      mainTable: TABLE_NAME,
+      mainTableAlias: 'B',
+      columns: [
+        'B.id',
+        'B.section_id',
+        'B.order',
+        'B.title',
+        'B.book_thumb_path',
+        'B.description',
+        'B.created_date',
+        'B.updated_date',
+        { raw: "JSON_ARRAYAGG(JSON_OBJECT('extracted_keyword', BK.extracted_keyword)) AS extracted_text" }
+        // 'JSON_ARRAYAGG(JSON_OBJECT(\'extracted_keyword\', BK.extracted_keyword)) AS extracted_text'
+      ],
+      joins: [
+        { type: 'INNER', table: 'BookKeyword', alias: 'BK', on: 'B.id = BK.book_id' },
+      ],
+      where: { 'B.id': id },
+      groupBy: ['B.id']
+    });
+    return (bookWithOCR && bookWithOCR.length > 0) ? bookWithOCR[0] : null;
+  }
+
   public async searchBooks(sectionId: number, keyword: string): Promise<IBookResult[] | null> {
     const books = await this.queryBuilder.conditionRead<IBookResult>({
       mainTable: TABLE_NAME,
@@ -47,7 +72,7 @@ export class BookService {
   public async getBookDetail(sectionId: number, page: number, pageSize: number): Promise<IBookDetailPaging | null> {
     const offset = (page - 1) * pageSize;
     const bookDetails = await this.queryBuilder.conditionRead<IBookDeatil>({
-      mainTable: 'Section',
+      mainTable: 'Section AS S',
       columns: [
         'S.id AS id',
         'S.label AS label',
@@ -96,6 +121,10 @@ export interface IBook {
   description?: string;
   created_date: Date;
   updated_date?: Date;
+}
+
+export interface IBookWithOCR extends IBook {
+  extracted_text?: string[];
 }
 
 export interface IBookDeatil {

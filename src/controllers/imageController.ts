@@ -19,6 +19,16 @@ const s3Client = new S3Client({
   }
 });
 
+const resize = async(fileBuffer: Buffer, maxWidth: number) => {
+  let image = sharp(fileBuffer);
+  const metadata = await image.metadata();
+
+  if(metadata.width && metadata.width > maxWidth)
+    return await sharp(fileBuffer).rotate().resize({width: maxWidth, fit: sharp.fit.contain, withoutEnlargement: true}).toBuffer();
+  else
+    return await sharp(fileBuffer).rotate().toBuffer();
+}
+
 const vision = new ImageAnnotatorClient({
   keyFilename: path.resolve(__dirname, process.env.GOOGLE_CLOUD_VISION_KEY_PATH as string),
 });
@@ -50,20 +60,23 @@ export const uploadImage = async (req: Request, res: Response) => {
 
     const fileName = `${uuid}-${transliteratedName}.${extension}`;
 
-    // 병렬 처리를 위한 Promise.all 사용
-    const [originalPath, thumbnailBuffer, extractedText] = await Promise.all([
-      uploadToS3(file.buffer, userId, rootPath, DIRECTORY_ORIGIN, fileName, file.mimetype),
-      sharp(file.buffer).resize(114, 164, { fit: 'cover' }).toBuffer(),
+    
+    const [originalBuffer, thumbnailBuffer] = await Promise.all([
+      resize(file.buffer, 1000),
+      resize(file.buffer, 120),
+    ]);
+    
+    const [originalPath, thumbnailPath, extractedTextArray] = await Promise.all([
+      uploadToS3(originalBuffer, userId, rootPath, DIRECTORY_ORIGIN, fileName, file.mimetype),
+      uploadToS3(thumbnailBuffer, userId, rootPath, DIRECTORY_THUMB, fileName, file.mimetype),
       performOCR(file.buffer)
     ]);
-
-    const thumbnailPath = await uploadToS3(thumbnailBuffer, userId, rootPath, DIRECTORY_THUMB, fileName, 'image/jpeg');
 
     const imageResult: IImageResult = {
       original_path: originalPath,
       thumbnail_path: thumbnailPath,
       original_fileName: file.originalname,
-      extracted_text: extractedText,
+      extracted_text: extractedTextArray,
     };
 
     // printLog(imageResult);
@@ -101,11 +114,17 @@ const uploadToS3 = async (
   }
 };
 
-const performOCR = async (imageBuffer: Buffer): Promise<string> => {
+const performOCR = async (imageBuffer: Buffer): Promise<string[]> => {
   try {
     const [result] = await vision.textDetection(imageBuffer);
     const detections = result.textAnnotations;
-    return detections ? detections[0].description || "" : "";
+    if (detections && detections.length > 0) {
+      // 첫 번째 요소는 전체 텍스트이므로 제외하고, 나머지 단어들을 배열로 반환
+      return detections.slice(1)
+        .map(detection => detection.description)
+        .filter((description): description is string => description !== null && description !== undefined);
+    }
+    return [];
   } catch (error) {
     console.error('Error performing OCR:', error);
     throw error;
@@ -116,5 +135,5 @@ interface IImageResult {
   original_path: string,
   thumbnail_path: string,
   original_fileName: string,
-  extracted_text?: string
+  extracted_text?: string[]
 }

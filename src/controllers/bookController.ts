@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
-import { BookService } from '../repositories/services/BookService';
+import { BookService, IBookWithOCR } from '../repositories/services/BookService';
 import { printLog } from '../utils/utils';
+import { BookKeywordService } from '../repositories/services/BookKeywordService';
 
 export const getBooks = async (req: Request, res: Response) => {
     try {
@@ -57,9 +58,20 @@ export const searchBooks = async (req: Request, res: Response) => {
 
 export const createBook = async (req: Request, res: Response) => {
     try {
-        const {section_id, order, title, book_thumb_path, description} = req.body;
+        const {section_id, order, title, book_thumb_path, description, extracted_text} = req.body;
         const newBook = await BookService.getInstance().createBook({section_id, order, title, book_thumb_path, description});
-        return res.status(201).json({book: newBook});
+        if(newBook && newBook.id){
+            if(extracted_text && extracted_text.length > 0)
+            {
+                extracted_text.map(async(keyword:string)=> {
+                    await BookKeywordService.getInstance().createKeyword({book_id: newBook.id as number, extracted_keyword: keyword});
+                });
+            }
+        }
+        else
+            throw new Error("Fail to create Book");
+        const newBookWithKeywords = await BookService.getInstance().getBookWithKeyword(newBook.id);
+        return res.status(201).json({book: newBookWithKeywords});
     } catch(error){
         return res.status(400).json({ message: "Error create book", error });
     }
