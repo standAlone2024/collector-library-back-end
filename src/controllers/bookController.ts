@@ -6,7 +6,7 @@ import { BookKeywordService } from '../repositories/services/BookKeywordService'
 export const getBooks = async (req: Request, res: Response) => {
     try {
         const sectionId = Number.parseInt(req.params.id as string) || 0;
-        printLog("sectionId " + sectionId);
+        printLog("sectionId ?" + sectionId);
         if(sectionId === 0)
             return res.status(400).json({message: "Section id is not sent"});
         const books = await BookService.getInstance().getBooks(sectionId);
@@ -24,7 +24,7 @@ export const getBookDetails = async (req: Request, res: Response) => {
             return res.status(400).json({message: "Section id id not sent"});
         const page = Number.parseInt(req.query.page as string) || 1;
         const pageSize = Number.parseInt(req.query.pageSize as string) || 10;
-        const bookDetails = await BookService.getInstance().getBookDetail(sectionId, page, pageSize);
+        const bookDetails = await BookService.getInstance().getBookListBySectionId(sectionId, page, pageSize);
         return res.status(200).json({bookDetails});
     } catch(error){
         return res.status(500).json({ message: "Error fetching bookDeatils", error });
@@ -33,8 +33,11 @@ export const getBookDetails = async (req: Request, res: Response) => {
 
 export const getBookById = async (req: Request, res: Response) => {
     try{
-        const bookId = Number.parseInt(req.params.id);
-        const book = await BookService.getInstance().getBook(bookId);
+        const bookId = Number.parseInt(req.query.id as string) || 0;
+        printLog('bookId: ' + bookId);
+        // const book = await BookService.getInstance().getBook(bookId);
+        const book = await BookService.getInstance().getBookDeatilByBookId(bookId);
+        // printLog(book);
         return res.status(200).json({book});
     } catch(error){
         return res.status(500).json({message: "Error fetching a book"});
@@ -45,7 +48,8 @@ export const searchBooks = async (req: Request, res: Response) => {
     try {
         const { keyword, section_id } = req.query as { keyword: string, section_id: string };
         const sectionId = Number.parseInt(section_id);
-        // printLog(keyword, sectionId);
+        // printLog(keyword);
+        // printLog(sectionId);
         if(!keyword || typeof keyword !== 'string') 
             return res.status(400).json({message: "Keyword is not found"});
         const books = await BookService.getInstance().searchBooks(sectionId, keyword);

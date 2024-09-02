@@ -170,8 +170,10 @@ export class QueryBuilder {
       on: string;
     }>;
     where?: Record<string, any>;
+    and?: Array<{[key: string]: any}>;
     likeFields?: string[];
     orderBy?: string;
+    isOrderASC?: boolean;
     groupBy?: string[];
     limit?: number;
     offset?: number;
@@ -183,8 +185,10 @@ export class QueryBuilder {
       columns,
       joins = [],
       where = {},
+      and = [],
       likeFields = [],
       orderBy,
+      isOrderASC,
       groupBy,
       limit,
       offset,
@@ -202,15 +206,29 @@ export class QueryBuilder {
     ).join(' ');
 
     const whereClauses = [];
+    const whereParams = [];
     if (Object.keys(where).length) {
       whereClauses.push(Object.keys(where).map(key => `${this.addBackticks(key)} = ?`).join(' AND '));
+      whereParams.push(...Object.values(where));
+    }
+    if (and.length) {
+      and.forEach(condition => {
+        const andClause = Object.keys(condition).map(key => `${this.addBackticks(key)} = ?`).join(' AND ');
+        whereClauses.push(`(${andClause})`);
+        whereParams.push(...Object.values(condition));
+      });
     }
     if (likeFields.length) {
       whereClauses.push(likeFields.map(field => `${this.addBackticks(field)} LIKE ?`).join(' AND '));
+      whereParams.push(...likeFields.map(() => `%${keyword}%`));
     }
     const whereClause = whereClauses.length ? `WHERE ${whereClauses.join(' AND ')}` : '';
 
     const orderByClause = orderBy ? `ORDER BY ${this.addBackticks(orderBy)}` : '';
+    if(orderByClause.length > 0 ) {
+      isOrderASC ? orderByClause + ' ASC' : orderByClause + ' DESC';
+    }
+
     const groupByClause = groupBy?.length ? `GROUP BY ${groupBy.map(col => this.addBackticks(col)).join(', ')}` : '';
     const limitClause = limit ? `LIMIT ${limit}` : '';
     const offsetClause = offset ? `OFFSET ${offset}` : '';
@@ -227,11 +245,10 @@ export class QueryBuilder {
     `.trim();
     printLog('query ' + query);
     try {
-      const whereParams = [...Object.values(where), ...likeFields.map(() => `%${keyword}%`)];
       const [rows] = await this.db.query(query, whereParams);
       return rows as T[];
     } catch (error) {
-      console.error('Join error:', error);
+      console.error('Query error:', error);
       throw error;
     }
   }
