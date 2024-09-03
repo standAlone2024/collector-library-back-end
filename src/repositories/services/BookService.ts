@@ -206,6 +206,7 @@ export interface IBookDeatil {
 }
 
 export interface ILabelExtra {
+  id?: number;
   order: number;
   label_name: string;
   content: string;

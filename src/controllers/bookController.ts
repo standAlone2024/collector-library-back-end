@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
-import { BookService, IBookWithOCR } from '../repositories/services/BookService';
+import { BookService, ILabelExtra } from '../repositories/services/BookService';
 import { printLog } from '../utils/utils';
 import { BookKeywordService } from '../repositories/services/BookKeywordService';
+import { SectionContentService } from '../repositories/services/SectionContentService';
 
 export const getBooks = async (req: Request, res: Response) => {
     try {
@@ -62,13 +63,25 @@ export const searchBooks = async (req: Request, res: Response) => {
 
 export const createBook = async (req: Request, res: Response) => {
     try {
-        const {section_id, order, title, book_thumb_path, description, extracted_text} = req.body;
+        const {section_id, order, title, book_thumb_path, description, extracted_text, label_extra} = req.body;
         const newBook = await BookService.getInstance().createBook({section_id, order, title, book_thumb_path, description});
         if(newBook && newBook.id){
-            if(extracted_text && extracted_text.length > 0)
-            {
+            if(extracted_text && extracted_text.length > 0) {
                 extracted_text.map(async(keyword:string)=> {
-                    await BookKeywordService.getInstance().createKeyword({book_id: newBook.id as number, extracted_keyword: keyword});
+                    await BookKeywordService.getInstance().createKeyword(
+                        {book_id: newBook.id as number, extracted_keyword: keyword}
+                    );
+                });
+            }
+
+            if(label_extra && label_extra.length > 0) {
+                label_extra.map(async(label: ILabelExtra) => {
+                    const id = label.id;
+                    if(id){
+                        await SectionContentService.getInstance().createSectionContent(
+                            {section_label_id: id, book_id: newBook.id as number, content: label.content}
+                        );
+                    }
                 });
             }
         }
