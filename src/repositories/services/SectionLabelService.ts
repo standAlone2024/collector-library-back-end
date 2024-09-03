@@ -26,7 +26,7 @@ export class SectionLabelService {
   }
 
   public async getSectionLabels(section_id: number): Promise<ISectionOptLabel[] | null> {
-    return this.queryBuilder.read<ISectionOptLabel>(TABLE_NAME , {section_id});
+    return this.queryBuilder.read<ISectionOptLabel>(TABLE_NAME , {section_id}, {column: 'order', direction: 'ASC'});
   }
 
   public async updateSectionLabel(id: number, sectionLabel: Partial<ISectionOptLabel>): Promise<ISectionOptLabel> {

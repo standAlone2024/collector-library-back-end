@@ -10,6 +10,13 @@ interface JoinClause {
   on: string;
 }
 
+type OrderDirection = 'ASC' | 'DESC';
+
+interface OrderBy {
+  column: string;
+  direction: OrderDirection;
+}
+
 export class QueryBuilder {
   private db: Database;
 
@@ -56,12 +63,16 @@ export class QueryBuilder {
     }
   }
 
-  async read<T>(table: string, where: Partial<T> = {}): Promise<T[]> {
+  async read<T>(table: string, where: Partial<T> = {}, orderBy?: OrderBy): Promise<T[]> {
     const whereClause = Object.keys(where).length
     ? `WHERE ${Object.keys(where).map(key => `${this.addBackticks(key)} = ?`).join(' AND ')}`
     : '';
 
-    const query = `SELECT * FROM ${this.addBackticks(table)} ${whereClause}`;
+    const orderByClause = orderBy
+    ? `ORDER BY ${this.addBackticks(orderBy.column)} ${orderBy.direction}`
+    : '';
+
+    const query = `SELECT * FROM ${this.addBackticks(table)} ${whereClause} ${orderByClause}`;
     printLog('query ' + query);
 
     try {
