@@ -19,13 +19,14 @@ export class SectionContentService {
     return this.queryBuilder.create<SectionOptContent>(TABLE_NAME, content);
   }
 
-  public async getSectionContent(id: number): Promise<SectionOptContent | null> {
+  public async getSectionContentById(id: number): Promise<SectionOptContent | null> {
     const contents = await this.queryBuilder.read<SectionOptContent>(TABLE_NAME, { id });
     return contents && contents.length > 0 ? contents[0] : null;
   }
 
-  public async getSectionContents(section_label_id: number, book_id: number): Promise<SectionOptContent[] | null> {
-    return this.queryBuilder.read<SectionOptContent>(TABLE_NAME, { section_label_id, book_id });
+  public async getSectionContent(section_label_id: number, book_id: number): Promise<SectionOptContent | null> {
+    const content = await this.queryBuilder.read<SectionOptContent>(TABLE_NAME, { section_label_id, book_id });
+    return content && content.length > 0 ? content[0] : null;
   }
 
   public async updateSectionContent(id: number, content: Partial<SectionOptContent>): Promise<SectionOptContent> {

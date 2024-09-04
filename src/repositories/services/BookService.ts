@@ -65,7 +65,7 @@ export class BookService {
     const extraLabel = await this.queryBuilder.conditionRead<ILabelExtra>({
       mainTable: 'SectionOptLabel',
       mainTableAlias: 'SL', 
-      columns: ['SL.order', 'SL.label_name', {raw: "COALESCE(SC.`content`, '') AS content"}],
+      columns: ['SL.id', 'SL.order', 'SL.label_name', {raw: "COALESCE(SC.`content`, '') AS content"}],
       joins: [{type: 'LEFT', table: 'SectionOptContent', alias: 'SC', on: 'SL.id = SC.section_label_id', and: `SC.book_id = ${bookId}`},],
       // and: [{'SC.book_id': bookId}],
       orderBy: 'SL.order',
@@ -170,11 +170,12 @@ export class BookService {
   }
 
   public async updateBook(id: number, book: Partial<IBook>): Promise<IBook | null> {
+    const { created_date, ...updateData } = book; // created_date 제외
     const newBook = {
-      ...book,
+      ...updateData,
       updated_date: toDate(moment().format('YYYY-MM-DD HH:mm:ss')),
     }
-    await this.queryBuilder.update<IBook>(TABLE_NAME, book, { id });
+    await this.queryBuilder.update<IBook>(TABLE_NAME, newBook, { id });
     return await this.getBook(id);
   }
 

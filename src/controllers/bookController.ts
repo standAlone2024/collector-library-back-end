@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { BookService, ILabelExtra } from '../repositories/services/BookService';
+import { BookService, IBook, IBookDeatil, ILabelExtra } from '../repositories/services/BookService';
 import { printLog } from '../utils/utils';
 import { BookKeywordService } from '../repositories/services/BookKeywordService';
 import { SectionContentService } from '../repositories/services/SectionContentService';
@@ -100,13 +100,47 @@ export const updateBook = async (req: Request, res: Response) => {
         const existBook = await BookService.getInstance().getBook(bookId);
         if(!existBook)
             return res.status(404).json({message: "Book is not found"});
-        const {id, section_id, order, title, book_thumb_path, description, date} = req.body;
-        const updatedBook = await BookService.getInstance().updateBook(bookId, {id, section_id, order, title, book_thumb_path, description});
-        return res.status(200).json({book: updatedBook});
+        const bookDetail = req.body as IBookDeatil;
+        if(bookDetail){
+            const book = makeBook(bookDetail);
+            const updatedBook = await BookService.getInstance().updateBook(bookId, book);
+            bookDetail.label_extra?.map(async(label: ILabelExtra) => {
+                if(label.id && label.content)
+                {
+                    printLog(label);
+                    
+                    const oldContent = await SectionContentService.getInstance().getSectionContent(label.id, bookId);
+                    if(!oldContent)
+                    {
+                        await SectionContentService.getInstance().createSectionContent(
+                            {section_label_id: label.id, book_id: book.id as number, content: label.content}
+                        );
+                    }else {
+                        await SectionContentService.getInstance().updateSectionContent(oldContent.id as number, {content: label.content})
+                    }
+                }
+            });
+            const newBookWithKeywords = await BookService.getInstance().getBookWithKeyword(bookId);
+            return res.status(200).json({book: newBookWithKeywords});
+        }else
+            throw new Error("Sent wrong request data");
     } catch(error){
         return res.status(400).json({ message: "Error update book", error });
     }
 }
+
+const makeBook = (bookDetail: IBookDeatil) => {
+    const book:IBook = {
+        id: bookDetail.id,
+        section_id: bookDetail.section_id,
+        order: bookDetail.order,
+        title: bookDetail.label_basic.title,
+        book_thumb_path: bookDetail.book_thumb_path,
+        description: bookDetail.label_basic.description,
+        created_date: bookDetail.created_date,
+    }
+    return book;
+} 
 
 export const deleteBook = async (req: Request, res: Response) => {
     try {

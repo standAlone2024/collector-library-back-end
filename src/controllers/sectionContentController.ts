@@ -15,7 +15,7 @@ export const createContent = async (req: Request, res: Response) => {
 export const updateContent = async (req: Request, res: Response) => {
     try {
         const contentId = Number.parseInt(req.params.id);
-        const existSection = await SectionContentService.getInstance().getSectionContent(contentId);
+        const existSection = await SectionContentService.getInstance().getSectionContentById(contentId);
         if (!existSection) {
             return res.status(404).json({ message: "Section content not found" });
         }
