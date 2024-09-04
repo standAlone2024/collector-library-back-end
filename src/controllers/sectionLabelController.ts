@@ -29,8 +29,9 @@ export const getSectionLabelById = async (req: Request, res: Response) => {
 export const createSectionLabel = async (req: Request, res: Response) => {
     try {
         const {section_id, label_name, order} = req.body;
-        await SectionLabelService.getInstance().createSectionLabel({section_id, label_name, order});
-        return res.status(201).json({message: "Create section label success"});
+        printLog(section_id);
+        const newLabel = await SectionLabelService.getInstance().createSectionLabel({section_id, label_name, order});
+        return res.status(201).json({label: newLabel});
     } catch (error) {
         return res.status(400).json({ message: "Error create section label", error });
     }
@@ -58,6 +59,7 @@ export const deleteSectionLabel = async (req: Request, res: Response) => {
         const existLabel = await SectionLabelService.getInstance().getSectionLabel(labelId);
         if(!existLabel)
             return res.status(404).json({message: "Section label not found"});
+        await SectionLabelService.getInstance().deleteSectionLabel(labelId);
         return res.status(200).json({message: "Section label successfully deleted"});
     } catch (error) {
         return res.status(500).json({ message: "Error delete section label", error });

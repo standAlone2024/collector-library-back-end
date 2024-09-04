@@ -1,6 +1,7 @@
 import moment from 'moment';
 import { QueryBuilder } from '../../utils/QueryBuilder';
 import { toDate } from '../../utils/utils';
+import { ISectionOptLabel } from './SectionLabelService';
 
 const TABLE_NAME = 'Section';
 
@@ -48,11 +49,12 @@ export class SectionService {
   }
 
   public async updateSection(id: number, section: Partial<ISection>): Promise<ISection | null> {
+    const { created_date, ...updateData } = section;
     const newSection = {
-      ...section,
+      ...updateData,
       updated_date: toDate(moment().format('YYYY-MM-DD HH:mm:ss')),
     }
-    await this.queryBuilder.update<ISection>(TABLE_NAME, section, { id });
+    await this.queryBuilder.update<ISection>(TABLE_NAME, newSection, { id });
     return await this.getSection(id);
   }
 
@@ -71,6 +73,9 @@ export interface ISection {
   updated_date?: Date;
 }
 
+export interface ISectionNLabel extends ISection {
+  label_extra: ISectionOptLabel[];
+}
 export interface ISectionResult {
   id: number;
   label: string;

@@ -16,8 +16,9 @@ export class SectionLabelService {
     return SectionLabelService.instance;
   }
 
-  public async createSectionLabel(sectionLabel: Omit<ISectionOptLabel, 'id'>): Promise<number> {  
-    return this.queryBuilder.create<ISectionOptLabel>(TABLE_NAME, sectionLabel);
+  public async createSectionLabel(sectionLabel: Omit<ISectionOptLabel, 'id'>): Promise<ISectionOptLabel | null> {  
+    const sectionId = await this.queryBuilder.create<ISectionOptLabel>(TABLE_NAME, sectionLabel);
+    return await this.getSectionLabel(sectionId);
   }
 
   public async getSectionLabel(id: number): Promise<ISectionOptLabel | null> {
