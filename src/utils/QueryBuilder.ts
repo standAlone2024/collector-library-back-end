@@ -2,14 +2,6 @@
 import { Database } from '../repositories/database';
 import { printLog } from './utils';
 
-type JoinType = 'INNER' | 'LEFT' | 'RIGHT' | 'FULL';
-
-interface JoinClause {
-  type: JoinType;
-  table: string;
-  on: string;
-}
-
 type OrderDirection = 'ASC' | 'DESC';
 
 interface OrderBy {
@@ -179,6 +171,7 @@ export class QueryBuilder {
       table: string;
       alias?: string; // 조인 테이블 별칭 추가
       on: string;
+      and?: string; 
     }>;
     where?: Record<string, any>;
     and?: Array<{[key: string]: any}>;
@@ -212,8 +205,12 @@ export class QueryBuilder {
       ? `${this.addBackticks(mainTable)} AS ${mainTableAlias}`
       : this.addBackticks(mainTable);
 
+    // const joinClauses = joins.map(join =>
+    //   `${join.type} JOIN ${this.addBackticks(join.table)}${join.alias ? ` AS ${join.alias}` : ''} ON ${join.on}`
+    // ).join(' ');
+
     const joinClauses = joins.map(join =>
-      `${join.type} JOIN ${this.addBackticks(join.table)}${join.alias ? ` AS ${join.alias}` : ''} ON ${join.on}`
+      `${join.type} JOIN ${this.addBackticks(join.table)}${join.alias ? ` AS ${join.alias}` : ''} ON ${join.on}${join.and ? ` AND ${join.and}` : ''}`
     ).join(' ');
 
     const whereClauses = [];
