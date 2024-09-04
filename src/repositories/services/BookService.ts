@@ -45,8 +45,12 @@ export class BookService {
         'B.description',
         'B.created_date',
         'B.updated_date',
-        { raw: "JSON_ARRAYAGG(JSON_OBJECT('extracted_keyword', BK.extracted_keyword)) AS extracted_text" }
-        // 'JSON_ARRAYAGG(JSON_OBJECT(\'extracted_keyword\', BK.extracted_keyword)) AS extracted_text'
+        //[null]로 반환되는 부분 개선
+        { raw: "JSON_OBJECT('title', B.title, 'description', B.description) AS label_basic, " 
+          + "IFNULL(" 
+            + "NULLIF(JSON_ARRAYAGG(BK.extracted_keyword), JSON_ARRAY(NULL))," 
+            + "JSON_ARRAY()) " 
+          + "AS extracted_text"},
       ],
       joins: [
         { type: 'INNER', table: 'BookKeyword', alias: 'BK', on: 'B.id = BK.book_id' },
@@ -61,9 +65,9 @@ export class BookService {
     const extraLabel = await this.queryBuilder.conditionRead<ILabelExtra>({
       mainTable: 'SectionOptLabel',
       mainTableAlias: 'SL', 
-      columns: ['SL.order', 'SL.label_name', 'SC.content'],
-      joins: [{type: 'INNER', table: 'SectionOptContent', alias: 'SC', on: 'SL.id = SC.section_label_id'},],
-      where: {'SC.book_id': bookId},
+      columns: ['SL.order', 'SL.label_name', {raw: "COALESCE(SC.`content`, '') AS content"}],
+      joins: [{type: 'LEFT', table: 'SectionOptContent', alias: 'SC', on: 'SL.id = SC.section_label_id', and: `SC.book_id = ${bookId}`},],
+      // and: [{'SC.book_id': bookId}],
       orderBy: 'SL.order',
       isOrderASC: true,
     });
@@ -79,24 +83,25 @@ export class BookService {
       columns: [
         'B.id', 'B.section_id', 'B.order', 'B.book_thumb_path',
         { raw: "JSON_OBJECT('title', B.title, 'description', B.description) AS label_basic" },
-        { raw: "JSON_ARRAYAGG(JSON_OBJECT('extracted_keyword', BK.extracted_keyword)) AS extracted_text"},
+        //[null]로 반환되는 부분 개선
+        { raw: "JSON_OBJECT('title', B.title, 'description', B.description) AS label_basic, " 
+          + "IFNULL(" 
+            + "NULLIF(JSON_ARRAYAGG(BK.extracted_keyword), JSON_ARRAY(NULL))," 
+            + "JSON_ARRAY()) " 
+          + "AS extracted_text"},
         'B.created_date', 'B.updated_date'
       ],
       joins: [ 
         {type: 'LEFT', table: 'BookKeyword', alias: 'BK', on: 'B.id = BK.book_id'},
       ],
-      where: {'B.id': id},
-      groupBy: ['B.id']
+      where: {'B.id': id}
     });
     //
     if( bookDetail && bookDetail.length > 0 ) {
       const labelExtra = await this.getLabelExtra(id);
       // printLog(labelExtra);
-      if (labelExtra) {
-        bookDetail[0].label_extra = [];
-        bookDetail[0].label_extra = labelExtra;
-      }
-      printLog(bookDetail[0].label_extra);
+      bookDetail[0].label_extra = labelExtra;
+      // printLog(bookDetail[0].label_extra);
     }
     return ( bookDetail && bookDetail.length > 0 ) ? bookDetail[0] : null;
   }
