@@ -63,7 +63,7 @@ export const uploadImage = async (req: Request, res: Response) => {
     
     const [originalBuffer, thumbnailBuffer] = await Promise.all([
       resize(file.buffer, 1000),
-      resize(file.buffer, 120),
+      resize(file.buffer, 300),
     ]);
     
     const [originalPath, thumbnailPath, extractedTextArray] = await Promise.all([
